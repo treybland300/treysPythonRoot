@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>To-Do Lists</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 16px; background: #f0f4f8; color: #222; }
+        h1 { color: #2c7a4b; margin-bottom: 4px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .btn-add { background: #2c7a4b; color: white; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-size: 15px; }
+        .home-link { color: #888; text-decoration: none; font-size: 14px; }
+        .jump-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .jump-bar a { background: white; color: #2c7a4b; border: 1px solid #2c7a4b; padding: 6px 12px; border-radius: 20px; text-decoration: none; font-size: 13px; }
+
+        .list-section { background: white; border-radius: 14px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .list-title { font-size: 18px; font-weight: bold; color: #2c7a4b; }
+        .btn-add-small { font-size: 20px; color: #2c7a4b; text-decoration: none; line-height: 1; }
+
+        .item-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; background: #f8faf9; border: 1px solid #e0ebe5; transition: background 0.2s; }
+        .item-row.inactive { background: #f5f5f5; border-color: #ddd; opacity: 0.6; }
+        .item-row.active-row { cursor: default; }
+        .drag-handle { color: #bbb; font-size: 18px; cursor: grab; flex-shrink: 0; touch-action: none; }
+        .item-row.inactive .drag-handle { cursor: default; color: #ddd; }
+
+        .item-label-wrap { flex: 1; position: relative; }
+        .item-label { font-size: 15px; }
+        .item-label.done { text-decoration: line-through; color: #aaa; }
+        .info-btn { background: none; border: none; color: #aaa; font-size: 14px; cursor: pointer; padding: 0 2px; }
+        .info-btn:hover { color: #2c7a4b; }
+        .desc-popup { display: none; position: absolute; left: 0; top: 28px; background: #333; color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; z-index: 100; min-width: 180px; max-width: 280px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .desc-popup.show { display: block; }
+        @media (hover: hover) {
+            .item-label-wrap:hover .desc-popup { display: block; }
+        }
+
+        .item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .toggle-wrap { display: flex; align-items: center; }
+        .toggle-cb { display: none; }
+        .toggle-label { width: 38px; height: 22px; background: #ccc; border-radius: 11px; display: block; position: relative; cursor: pointer; transition: background 0.2s; }
+        .toggle-label::after { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
+        .toggle-cb:checked + .toggle-label { background: #2c7a4b; }
+        .toggle-cb:checked + .toggle-label::after { left: 19px; }
+        .btn-edit { color: #666; text-decoration: none; font-size: 16px; }
+        .btn-delete { background: none; border: none; color: #e74c3c; font-size: 16px; cursor: pointer; padding: 0; }
+
+        .empty-list { color: #bbb; font-size: 14px; text-align: center; padding: 12px; }
+        .backlog-toggle { font-size: 12px; color: #aaa; cursor: pointer; margin-top: 8px; text-align: center; display: block; }
+        .backlog-section { display: none; }
+        .backlog-section.open { display: block; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div>
+            <a href="/" class="home-link">← Home</a>
+            <h1>📋 To-Do Lists</h1>
+        </div>
+        <a href="{{ url_for('todo.new_item') }}" class="btn-add">+ Add Item</a>
+    </div>
+
+    <div class="jump-bar">
+        {% for lst in lists %}
+        <a href="#list-{{ loop.index }}">{{ lst }}</a>
+        {% endfor %}
+    </div>
+
+    {% for lst in lists %}
+    {% set lst_items = items[lst] %}
+    {% set active_items = lst_items | selectattr('active') | list %}
+    {% set inactive_items = lst_items | rejectattr('active') | list %}
+
+    <div class="list-section" id="list-{{ loop.index }}">
+        <div class="list-header">
+            <div class="list-title">{{ lst }}</div>
+            <a href="{{ url_for('todo.new_item', list=lst) }}" class="btn-add-small" title="Add item to {{ lst }}">＋</a>
+        </div>
+
+        <div class="sortable-list" id="sortable-{{ loop.index }}" data-list="{{ lst }}">
+            {% for item in active_items %}
+            <div class="item-row active-row" data-id="{{ item['id'] }}">
+                <span class="drag-handle">⠿</span>
+                <div class="item-label-wrap">
+                    <span class="item-label">{{ item['label'] }}</span>
+                    {% if item['description'] %}
+                    <button class="info-btn" onclick="toggleDesc(this)" type="button">ℹ</button>
+                    <div class="desc-popup">{{ item['description'] }}</div>
+                    {% endif %}
+                </div>
+                <div class="item-actions">
+                    <div class="toggle-wrap">
+                        <input type="checkbox" class="toggle-cb" id="tog-{{ item['id'] }}" checked
+                            onchange="toggleItem({{ item['id'] }}, this)">
+                        <label class="toggle-label" for="tog-{{ item['id'] }}"></label>
+                    </div>
+                    <a href="{{ url_for('todo.edit_item', id=item['id']) }}" class="btn-edit">✏️</a>
+                    <form method="POST" action="{{ url_for('todo.delete_item', id=item['id']) }}" style="display:inline" onsubmit="return confirm('Delete this item?')">
+                        <button type="submit" class="btn-delete">🗑</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+            {% if not active_items %}
+            <div class="empty-list">No active items</div>
+            {% endif %}
+        </div>
+
+        {% if inactive_items %}
+        <span class="backlog-toggle" onclick="toggleBacklog(this)">▸ {{ inactive_items | length }} inactive item(s)</span>
+        <div class="backlog-section">
+            {% for item in inactive_items %}
+            <div class="item-row inactive">
+                <span class="drag-handle">⠿</span>
+                <div class="item-label-wrap">
+                    <span class="item-label done">{{ item['label'] }}</span>
+                    {% if item['description'] %}
+                    <button class="info-btn" onclick="toggleDesc(this)" type="button">ℹ</button>
+                    <div class="desc-popup">{{ item['description'] }}</div>
+                    {% endif %}
+                </div>
+                <div class="item-actions">
+                    <div class="toggle-wrap">
+                        <input type="checkbox" class="toggle-cb" id="tog-{{ item['id'] }}"
+                            onchange="toggleItem({{ item['id'] }}, this)">
+                        <label class="toggle-label" for="tog-{{ item['id'] }}"></label>
+                    </div>
+                    <a href="{{ url_for('todo.edit_item', id=item['id']) }}" class="btn-edit">✏️</a>
+                    <form method="POST" action="{{ url_for('todo.delete_item', id=item['id']) }}" style="display:inline" onsubmit="return confirm('Delete this item?')">
+                        <button type="submit" class="btn-delete">🗑</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <script>
+        // Drag and drop
+        document.querySelectorAll('.sortable-list').forEach(function(el) {
+            Sortable.create(el, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: function(evt) {
+                    const list = el.querySelectorAll('.active-row[data-id]');
+                    const order = Array.from(list).map((row, i) => ({
+                        id: parseInt(row.dataset.id),
+                        order: i
+                    }));
+                    fetch('{{ url_for("todo.reorder") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(order)
+                    });
+                }
+            });
+        });
+
+        // Toggle active/inactive via AJAX
+        function toggleItem(id, cb) {
+            fetch('{{ url_for("todo.index") }}item/' + id + '/toggle', {
+                method: 'POST'
+            }).then(() => location.reload());
+        }
+
+        // Description tooltip on tap
+        function toggleDesc(btn) {
+            const popup = btn.nextElementSibling;
+            popup.classList.toggle('show');
+        }
+
+        // Close popups when tapping elsewhere
+        document.addEventListener('click', function(e) {
+            if (!e.target.classList.contains('info-btn')) {
+                document.querySelectorAll('.desc-popup.show').forEach(p => p.classList.remove('show'));
+            }
+        });
+
+        // Backlog toggle
+        function toggleBacklog(btn) {
+            const section = btn.nextElementSibling;
+            section.classList.toggle('open');
+            btn.textContent = section.classList.contains('open')
+                ? btn.textContent.replace('▸', '▾')
+                : btn.textContent.replace('▾', '▸');
+        }
+    </script>
+</body>
+</html>

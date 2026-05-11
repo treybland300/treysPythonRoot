@@ -5,11 +5,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from flask import Flask, render_template
 from packingapp.app import packing_bp
 from liftingapp.app import lifting_bp
+from todoapp.app import todo_bp
 
 app = Flask(__name__, template_folder='templates')
 
 app.register_blueprint(packing_bp, url_prefix='/packing')
 app.register_blueprint(lifting_bp, url_prefix='/lifting')
+app.register_blueprint(todo_bp, url_prefix='/todo')
 
 @app.route('/')
 def landing():
