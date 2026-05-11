@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Log Workout</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; background: #1a1a2e; color: #eee; }
+        h1 { color: #e94560; }
+        .nav a { background: #16213e; color: #eee; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 15px; border: 1px solid #444; }
+        .card { background: #16213e; border-radius: 12px; padding: 20px; margin: 16px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+        label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        input[type=date], input[type=number], select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #333; border-radius: 8px; font-size: 15px; background: #0f3460; color: #eee; box-sizing: border-box; }
+        .add-row { margin-bottom: 16px; }
+        .ex-block { border-bottom: 1px solid #2a2a4a; padding-bottom: 18px; margin-bottom: 18px; position: relative; }
+        .ex-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .ex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .ex-title { font-size: 16px; font-weight: bold; color: #e94560; }
+        .btn-remove { background: none; border: none; color: #e74c3c; font-size: 20px; cursor: pointer; padding: 0 4px; line-height: 1; }
+        .weight-hints { display: flex; gap: 16px; margin-bottom: 6px; font-size: 13px; color: #aaa; flex-wrap: wrap; }
+        .hint-current { color: #e94560; font-weight: bold; }
+        .incomplete-note { font-size: 12px; color: #e94560; margin-top: -8px; margin-bottom: 10px; }
+        .finished-row { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; }
+        .finished-row span { font-size: 13px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+        .finished-row label { margin: 0; text-transform: none; font-size: 14px; color: #eee; letter-spacing: 0; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .finished-row input[type=radio] { width: auto; margin: 0; accent-color: #e94560; }
+        .incomplete-fields { display: none; background: #0f1a30; border-radius: 8px; padding: 12px; margin-top: 4px; }
+        .incomplete-fields.visible { display: block; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .empty-msg { text-align: center; color: #555; padding: 20px; font-size: 15px; }
+        button[type=submit] { background: #e94560; color: white; border: none; padding: 14px 20px; border-radius: 8px; font-size: 16px; width: 100%; cursor: pointer; margin-top: 8px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="nav"><a href="{{ url_for('lifting.index') }}">← Home</a></div>
+    <h1>💪 Log Workout</h1>
+
+    <div class="card">
+        <form method="POST" id="workout-form">
+            <label>Date</label>
+            <input type="date" name="date" value="{{ today }}" required>
+
+            <div class="add-row">
+                <select id="ex-select" onchange="addExercise()">
+                    <option value="">-- Select exercise to add --</option>
+                    {% for ex in exercises %}
+                    <option value="{{ ex['id'] }}">{{ ex['name'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="exercise-list">
+                <div class="empty-msg" id="empty-msg">No exercises added yet. Select one above.</div>
+            </div>
+
+            <button type="submit" id="save-btn">Save Workout</button>
+        </form>
+    </div>
+
+    <script>
+        const exData = {};
+        {% for ex_id, data in ex_data.items() %}
+        exData[{{ ex_id }}] = {{ data | tojson }};
+        {% endfor %}
+
+        const addedIds = new Set();
+
+        function addExercise() {
+            const sel = document.getElementById('ex-select');
+            const id = parseInt(sel.value);
+            if (!id) return;
+
+            const name = sel.options[sel.selectedIndex].text;
+            const data = exData[id] || {};
+
+            addedIds.add(id);
+            sel.remove(sel.selectedIndex);
+            sel.value = '';
+
+            document.getElementById('empty-msg').style.display = 'none';
+
+            let hintsHtml = '';
+            if (data.last !== null && data.last !== undefined)
+                hintsHtml += `<span>Last: <strong style="color:#eee">${Math.round(data.last)} lbs</strong></span>`;
+            if (data.best !== null && data.best !== undefined)
+                hintsHtml += `<span>Best: <strong style="color:#eee">${Math.round(data.best)} lbs</strong></span>`;
+            if (data.current !== null && data.current !== undefined)
+                hintsHtml += `<span class="hint-current">Current: ${Math.round(data.current)} lbs</span>`;
+
+            const incompleteNote = (data.last_completed === 0 && data.last !== null)
+                ? `<div class="incomplete-note">⚠ Last attempt incomplete — ${data.last_sets || 0} sets, ${data.last_reps || 0} reps on last set</div>`
+                : '';
+
+            const currentVal = (data.current !== null && data.current !== undefined) ? Math.round(data.current) : '';
+
+            const block = document.createElement('div');
+            block.className = 'ex-block';
+            block.id = 'ex-block-' + id;
+            block.innerHTML = `
+                <div class="ex-header">
+                    <div class="ex-title">${name}</div>
+                    <button type="button" class="btn-remove" onclick="removeExercise(${id}, '${name}')">🗑</button>
+                </div>
+                ${hintsHtml ? `<div class="weight-hints">${hintsHtml}</div>` : ''}
+                <label>Weight (lbs)</label>
+                <input type="number" name="weight_${id}" value="${currentVal}" placeholder="Enter weight" step="2.5" min="0">
+                ${incompleteNote}
+                <div class="finished-row">
+                    <span>Finished 5×5?</span>
+                    <label><input type="radio" name="completed_${id}" value="yes" checked onchange="toggleIncomplete(${id}, false)"> Yes</label>
+                    <label><input type="radio" name="completed_${id}" value="no" onchange="toggleIncomplete(${id}, true)"> No</label>
+                </div>
+                <div class="incomplete-fields" id="incomplete_${id}">
+                    <div class="two-col">
+                        <div>
+                            <label>Sets Completed</label>
+                            <select name="sets_${id}">
+                                <option value="">--</option>
+                                <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Reps on Last Set</label>
+                            <select name="reps_${id}">
+                                <option value="">--</option>
+                                <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('exercise-list').appendChild(block);
+            document.getElementById('save-btn').style.display = 'block';
+        }
+
+        function removeExercise(id, name) {
+            document.getElementById('ex-block-' + id).remove();
+            addedIds.delete(id);
+            const sel = document.getElementById('ex-select');
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.text = name;
+            sel.appendChild(opt);
+            if (addedIds.size === 0) {
+                document.getElementById('empty-msg').style.display = 'block';
+                document.getElementById('save-btn').style.display = 'none';
+            }
+        }
+
+        function toggleIncomplete(exId, show) {
+            document.getElementById('incomplete_' + exId).classList.toggle('visible', show);
+        }
+    </script>
+</body>
+</html>

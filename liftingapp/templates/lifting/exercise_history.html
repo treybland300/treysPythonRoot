@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ exercise['name'] }} History</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; background: #1a1a2e; color: #eee; }
+        h1 { color: #e94560; }
+        .nav a { background: #16213e; color: #eee; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 15px; border: 1px solid #444; }
+        .card { background: #16213e; border-radius: 12px; padding: 16px; margin: 16px 0; }
+        .entry-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #2a2a4a; }
+        .entry-row:last-child { border-bottom: none; }
+        .date { font-size: 15px; color: #aaa; }
+        .weight { font-size: 20px; font-weight: bold; color: #e94560; }
+        .empty { color: #555; text-align: center; padding: 30px; }
+        .chart-wrap { background: #16213e; border-radius: 12px; padding: 16px; margin: 16px 0; overflow-x: auto; }
+        .bar-row { display: flex; align-items: center; margin-bottom: 8px; gap: 10px; }
+        .bar-date { font-size: 12px; color: #888; width: 90px; flex-shrink: 0; }
+        .bar { background: #e94560; height: 20px; border-radius: 4px; min-width: 4px; }
+        .bar-val { font-size: 13px; color: #eee; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="nav"><a href="{{ url_for('lifting.index') }}">← Home</a></div>
+    <h1>{{ exercise['name'] }}</h1>
+    {% if history %}
+        <div class="chart-wrap">
+            {% set max_w = history | map(attribute='weight') | max %}
+            {% for entry in history %}
+            <div class="bar-row">
+                <div class="bar-date">{{ entry['date'] }}</div>
+                <div class="bar" style="width: {{ (entry['weight'] / max_w * 220) | int }}px"></div>
+                <div class="bar-val">{{ entry['weight'] | int }} lbs</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="card">
+            {% for entry in history | reverse %}
+            <div class="entry-row">
+                <div class="date">{{ entry['date'] }}</div>
+                <div class="weight">{{ entry['weight'] | int }} lbs</div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty">No completed history yet for this exercise.</div>
+    {% endif %}
+</body>
+</html>

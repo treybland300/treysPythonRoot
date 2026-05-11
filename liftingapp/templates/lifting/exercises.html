@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manage Exercises</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; background: #1a1a2e; color: #eee; }
+        h1 { color: #e94560; }
+        .nav a { background: #16213e; color: #eee; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 15px; border: 1px solid #444; }
+        .card { background: #16213e; border-radius: 12px; padding: 16px; margin: 16px 0; }
+        .ex-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #2a2a4a; }
+        .ex-row:last-child { border-bottom: none; }
+        .ex-name { font-size: 16px; }
+        .ex-name.inactive { color: #555; text-decoration: line-through; }
+        .btn-toggle { border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+        .btn-active { background: #2ecc71; color: #000; }
+        .btn-inactive { background: #333; color: #888; }
+        input[type=text] { width: 100%; padding: 12px; border: 1px solid #333; border-radius: 8px; font-size: 16px; background: #0f3460; color: #eee; box-sizing: border-box; margin-bottom: 12px; }
+        button[type=submit] { background: #e94560; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 15px; width: 100%; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="nav"><a href="{{ url_for('lifting.index') }}">← Home</a></div>
+    <h1>⚙️ Manage Exercises</h1>
+    <div class="card">
+        <h3 style="margin-top:0; color:#aaa;">Add New Exercise</h3>
+        <form method="POST">
+            <input type="text" name="name" placeholder="Exercise name" required>
+            <button type="submit">Add Exercise</button>
+        </form>
+    </div>
+    <div class="card">
+        {% for ex in exercises %}
+        <div class="ex-row">
+            <div class="ex-name {% if not ex['active'] %}inactive{% endif %}">{{ ex['name'] }}</div>
+            <form method="POST" action="{{ url_for('lifting.toggle_exercise', id=ex['id']) }}">
+                <button type="submit" class="btn-toggle {% if ex['active'] %}btn-active{% else %}btn-inactive{% endif %}">
+                    {% if ex['active'] %}Active{% else %}Inactive{% endif %}
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

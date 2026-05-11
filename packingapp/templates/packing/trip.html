@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ trip['name'] }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; background: #f5f5f5; }
+        h1 { color: #c0622f; }
+        .nav a { background: #c0622f; color: white; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 15px; }
+        .progress-card { background: #1e3a2f; color: white; border-radius: 12px; padding: 20px; margin: 16px 0; text-align: center; }
+        .progress-card .pct { font-size: 48px; font-weight: bold; }
+        .progress-bar { background: #444; border-radius: 10px; height: 10px; margin: 10px 0; }
+        .progress-fill { background: #c0622f; border-radius: 10px; height: 10px; transition: width 0.3s ease; }
+        .progress-label { font-size: 14px; opacity: 0.85; }
+        .category { margin-top: 20px; }
+        .category h3 { color: #555; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+        .item-row { background: white; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .item-name { font-size: 16px; margin-bottom: 8px; }
+        .item-name.packed { text-decoration: line-through; color: #aaa; }
+        .packed-by { font-size: 13px; color: #27ae60; margin-bottom: 8px; }
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn { padding: 8px 14px; border-radius: 8px; text-decoration: none; font-size: 14px; cursor: pointer; border: none; }
+        .btn-user { background: #c0622f; color: white; }
+        .btn-unpack { background: #eee; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="{{ url_for('packing.index') }}">← Home</a> &nbsp;
+        <a href="{{ url_for('packing.add_trip_items', id=trip['id']) }}">➕ Add Items</a>
+    </div>
+    <h1>🧳 {{ trip['name'] }}</h1>
+    <p style="color:#888;">{{ trip['date'] }}</p>
+
+    {% set total = items | length %}
+    {% set packed_count = items | selectattr('packed_by') | list | length %}
+    {% set pct = ((packed_count / total) * 100) | int if total > 0 else 0 %}
+
+    <div class="progress-card">
+        <div class="pct" id="pct">{{ pct }}%</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:{{ pct }}%"></div></div>
+        <div class="progress-label" id="progressLabel">{{ packed_count }} of {{ total }} items packed</div>
+    </div>
+
+    {% set categories = items | map(attribute='category') | unique | list %}
+    {% for cat in categories %}
+    <div class="category">
+        <h3>{{ cat }}</h3>
+        {% for item in items if item['category'] == cat %}
+        <div class="item-row" id="row-{{ item['id'] }}">
+            <div class="item-name {% if item['packed_by'] %}packed{% endif %}" id="name-{{ item['id'] }}">{{ item['name'] }}</div>
+            <div id="status-{{ item['id'] }}">
+            {% if item['packed_by'] %}
+                <div class="packed-by">✅ Packed by {{ item['packed_by'] }}</div>
+                <div class="btn-row">
+                    <button class="btn btn-unpack" onclick="unpackItem({{ trip['id'] }}, {{ item['id'] }})">Undo</button>
+                </div>
+            {% else %}
+                <div class="btn-row">
+                    {% for user in active_users %}
+                    <button class="btn btn-user" onclick="packItem({{ trip['id'] }}, {{ item['id'] }}, '{{ user['name'] }}')">{{ user['name'] }} packed it</button>
+                    {% endfor %}
+                    {% if not active_users %}
+                    <span style="color:#aaa;font-size:13px;">No active users. <a href="{{ url_for('packing.users') }}">Add users</a> first.</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    {% if not items %}
+    <p style="color:#aaa;text-align:center;padding:30px;">No items on this trip.</p>
+    {% endif %}
+
+    <script>
+        const PACK_PREFIX = "{{ url_for('packing.index') }}".replace(/\/+$/, '');
+
+        function updateProgress(packed, total, pct) {
+            document.getElementById('pct').textContent = pct + '%';
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressLabel').textContent = packed + ' of ' + total + ' items packed';
+        }
+
+        function packItem(tripId, itemId, user) {
+            fetch(PACK_PREFIX + '/trip/' + tripId + '/pack/' + itemId + '/' + user, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('name-' + itemId).classList.add('packed');
+                document.getElementById('status-' + itemId).innerHTML =
+                    '<div class="packed-by">✅ Packed by ' + user + '</div>' +
+                    '<div class="btn-row"><button class="btn btn-unpack" onclick="unpackItem(' + tripId + ',' + itemId + ')">Undo</button></div>';
+                updateProgress(data.packed, data.total, data.pct);
+            });
+        }
+
+        function unpackItem(tripId, itemId) {
+            fetch(PACK_PREFIX + '/trip/' + tripId + '/unpack/' + itemId, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('name-' + itemId).classList.remove('packed');
+                const userButtons = {{ active_users | map(attribute='name') | list | tojson }};
+                let btns = userButtons.map(u =>
+                    '<button class="btn btn-user" onclick="packItem(' + tripId + ',' + itemId + ',\'' + u + '\')">' + u + ' packed it</button>'
+                ).join('');
+                document.getElementById('status-' + itemId).innerHTML = '<div class="btn-row">' + btns + '</div>';
+                updateProgress(data.packed, data.total, data.pct);
+            });
+        }
+    </script>
+</body>
+</html>

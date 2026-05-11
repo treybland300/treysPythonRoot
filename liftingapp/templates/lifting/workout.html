@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Workout {{ workout['date'] }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; background: #1a1a2e; color: #eee; }
+        h1 { color: #e94560; }
+        .nav a { background: #16213e; color: #eee; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 15px; border: 1px solid #444; }
+        .card { background: #16213e; border-radius: 12px; padding: 16px; margin: 16px 0; }
+        .entry-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #2a2a4a; }
+        .entry-row:last-child { border-bottom: none; }
+        .ex-name { font-size: 16px; }
+        .ex-weight { font-size: 20px; font-weight: bold; color: #e94560; }
+        .sets { font-size: 12px; color: #888; margin-top: 2px; }
+        .badge { font-size: 12px; padding: 3px 8px; border-radius: 4px; margin-top: 4px; display: inline-block; }
+        .badge.done { background: #1a3a2a; color: #2ecc71; }
+        .badge.partial { background: #3a1a1a; color: #e74c3c; }
+        .btn-delete { background: #333; color: #e74c3c; border: 1px solid #e74c3c; padding: 10px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div class="nav"><a href="{{ url_for('lifting.index') }}">← Home</a></div>
+    <h1>🗓 {{ workout['date'] }}</h1>
+    <div class="card">
+        {% for entry in entries %}
+        <div class="entry-row">
+            <div>
+                <div class="ex-name">{{ entry['name'] }}</div>
+                <div class="sets">5 sets × 5 reps</div>
+                {% if entry['completed'] %}
+                    <span class="badge done">✓ Finished 5×5</span>
+                {% else %}
+                    <span class="badge partial">{{ entry['sets_completed'] or 0 }} sets, {{ entry['reps_last_set'] or 0 }} reps on last set</span>
+                {% endif %}
+            </div>
+            <div class="ex-weight">{{ entry['weight'] | int }} lbs</div>
+        </div>
+        {% endfor %}
+    </div>
+    <form method="POST" action="{{ url_for('lifting.delete_workout', id=workout['id']) }}" onsubmit="return confirm('Delete this workout?')">
+        <button type="submit" class="btn-delete">🗑 Delete Workout</button>
+    </form>
+</body>
+</html>

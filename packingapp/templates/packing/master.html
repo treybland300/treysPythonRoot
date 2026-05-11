@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Master Packing List</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; background: #f5f5f5; }
+        h1 { color: #c0622f; }
+        .nav a { background: #c0622f; color: white; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 15px; }
+        .form-card { background: white; border-radius: 12px; padding: 16px; margin: 16px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 10px; margin: 6px 0 12px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
+        button { background: #c0622f; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 15px; width: 100%; }
+        .category { margin-top: 20px; }
+        .category h3 { color: #555; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+        .item-row { background: white; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .delete { color: #e74c3c; text-decoration: none; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div class="nav"><a href="{{ url_for('packing.index') }}">← Home</a> &nbsp; <a href="{{ url_for('packing.categories') }}">Manage Categories</a></div>
+    <h1>📋 Master List</h1>
+    <div class="form-card">
+        <h3>Add New Item</h3>
+        <form method="POST">
+            <label>Item Name</label>
+            <input type="text" name="name" placeholder="e.g. Diapers" required>
+            <label>Category</label>
+            <select name="category">
+                {% for cat in categories %}
+                <option {% if cat['name'] == last_category %}selected{% endif %}>{{ cat['name'] }}</option>
+                {% endfor %}
+                {% if not categories %}
+                <option value="">No categories yet</option>
+                {% endif %}
+            </select>
+            <button type="submit">Add Item</button>
+        </form>
+    </div>
+    {% set item_categories = items | map(attribute='category') | unique | list %}
+    {% for cat in item_categories %}
+    <div class="category">
+        <h3>{{ cat }}</h3>
+        {% for item in items if item['category'] == cat %}
+        <div class="item-row">
+            <span>{{ item['name'] }}</span>
+            <a href="{{ url_for('packing.delete_master_item', id=item['id']) }}" class="delete">🗑</a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    {% if not items %}
+    <p style="color:#aaa;text-align:center;padding:30px;">No items yet. Add your first item above!</p>
+    {% endif %}
+</body>
+</html>
