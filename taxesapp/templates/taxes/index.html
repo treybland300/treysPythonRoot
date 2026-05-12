@@ -81,7 +81,10 @@
             </div>
             <div class="item-actions">
                 <button class="btn-notes"
-                    onclick="openNotes({{ item['id'] }}, {{ item['label']|tojson }}, '{{ url_for('taxes.add_note', id=item['id']) }}')">
+                    data-id="{{ item['id'] }}"
+                    data-label="{{ item['label']|e }}"
+                    data-note-url="{{ url_for('taxes.add_note', id=item['id']) }}"
+                    onclick="openNotes(this)">
                     📝{% if notes[item['id']] %} ({{ notes[item['id']]|length }}){% endif %}
                 </button>
                 <form method="POST" action="{{ url_for('taxes.complete_item', id=item['id']) }}" style="display:inline">
@@ -107,7 +110,10 @@
             </div>
             <div class="item-actions">
                 <button class="btn-notes"
-                    onclick="openNotes({{ item['id'] }}, {{ item['label']|tojson }}, '{{ url_for('taxes.add_note', id=item['id']) }}')">
+                    data-id="{{ item['id'] }}"
+                    data-label="{{ item['label']|e }}"
+                    data-note-url="{{ url_for('taxes.add_note', id=item['id']) }}"
+                    onclick="openNotes(this)">
                     📝{% if notes[item['id']] %} ({{ notes[item['id']]|length }}){% endif %}
                 </button>
                 <form method="POST" action="{{ url_for('taxes.complete_item', id=item['id']) }}" style="display:inline">
@@ -158,7 +164,10 @@
             {% endfor %}
         };
 
-        function openNotes(id, label, noteUrl) {
+        function openNotes(btn) {
+            const id = parseInt(btn.dataset.id);
+            const label = btn.dataset.label;
+            const noteUrl = btn.dataset.noteUrl;
             document.getElementById('modalTitle').textContent = label;
             document.getElementById('noteForm').action = noteUrl;
 
