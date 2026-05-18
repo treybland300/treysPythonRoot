@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stella's Sleep Tracker — {{ log_date }}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal:       #2d7a6b;
+      --teal-light: #e8f5f1;
+      --teal-mid:   #b2d8ce;
+      --amber:      #fff3cd;
+      --amber-b:    #f0a500;
+      --red-hint:   #fff0f0;
+      --red-b:      #e05252;
+      --bg:         #f4f9f7;
+      --card:       #ffffff;
+      --border:     #d6ece6;
+      --text:       #1a3330;
+      --muted:      #5a7a75;
+      --success:    #2d7a6b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    header {
+      background: var(--teal);
+      color: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 18px; font-weight: 700; white-space: nowrap; }
+    header h1 span { font-size: 13px; font-weight: 400; opacity: 0.8; display: block; }
+
+    .nav-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .nav-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.35);
+      color: white;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.3); }
+    .nav-btn.today { background: white; color: var(--teal); font-weight: 600; }
+
+    .save-indicator {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.15);
+      min-width: 60px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .save-indicator.saving { background: rgba(255,255,255,0.25); }
+    .save-indicator.saved  { background: rgba(255,255,255,0.9); color: var(--teal); }
+    .save-indicator.error  { background: #e05252; }
+
+    /* ── Layout ─────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 0;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { order: -1; }
+    }
+
+    .main-col { display: flex; flex-direction: column; gap: 16px; padding-right: 20px; }
+
+    /* ── Cards ──────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .card-header {
+      background: var(--teal);
+      color: white;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-header .icon { font-size: 18px; }
+    .card-header h2 { font-size: 15px; font-weight: 700; }
+    .card-header .sub { font-size: 12px; opacity: 0.75; margin-top: 1px; }
+
+    .card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+    /* ── Fields ─────────────────────────────────────── */
+    .field-row {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      align-items: start;
+      gap: 8px;
+    }
+    @media (max-width: 480px) {
+      .field-row { grid-template-columns: 1fr; }
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      padding-top: 7px;
+    }
+
+    input[type="time"],
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text);
+      background: #fafefe;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input[type="time"]:focus,
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(45,122,107,0.12);
+    }
+    input[type="number"] { max-width: 90px; }
+    textarea { resize: vertical; min-height: 52px; }
+
+    /* Checkbox row */
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .check-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--teal);
+      cursor: pointer;
+    }
+    .check-row label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      padding-top: 0;
+      cursor: pointer;
+    }
+
+    /* Inline group (time + oz) */
+    .inline-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .inline-group input[type="time"] { max-width: 130px; }
+    .inline-group .oz-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+    /* Night waking rows */
+    .waking-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 60px 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+    @media (max-width: 560px) {
+      .waking-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .waking-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .waking-row-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--teal);
+      padding-top: 6px;
+    }
+
+    /* ── Hints ──────────────────────────────────────── */
+    .hint {
+      display: none;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border-left: 3px solid var(--teal);
+      background: var(--teal-light);
+      color: #1a4a40;
+    }
+    .hint.warn {
+      border-left-color: var(--amber-b);
+      background: var(--amber);
+      color: #5a3e00;
+    }
+    .hint.alert {
+      border-left-color: var(--red-b);
+      background: var(--red-hint);
+      color: #5a1a1a;
+    }
+    .hint.show { display: block; }
+
+    /* ── Summary bar ─────────────────────────────────── */
+    .summary-bar {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .summary-item { text-align: center; }
+    .summary-item .val {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--teal);
+    }
+    .summary-item .lbl {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .summary-hint {
+      flex: 1;
+      font-size: 13px;
+      color: var(--muted);
+      min-width: 200px;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────── */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .side-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .side-card h3 {
+      background: var(--teal-light);
+      color: var(--teal);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .side-card-body { padding: 12px 14px; }
+
+    /* Date list */
+    .date-list { list-style: none; }
+    .date-list li a {
+      display: block;
+      padding: 5px 0;
+      font-size: 13px;
+      color: var(--teal);
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .date-list li:last-child a { border-bottom: none; }
+    .date-list li a:hover { color: #1a5a4d; font-weight: 600; }
+    .date-list li a.active { font-weight: 700; color: #1a5a4d; }
+
+    /* History list */
+    .history-list { list-style: none; }
+    .history-list li {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text);
+    }
+    .history-list li:last-child { border-bottom: none; }
+    .history-list .field-name {
+      font-weight: 700;
+      color: var(--teal);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .history-list .change-vals {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 1px;
+    }
+    .history-list .change-time { float: right; color: #aaa; font-size: 10px; }
+
+    /* Key rules quick-ref */
+    .rules-list { list-style: none; }
+    .rules-list li {
+      padding: 5px 0;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .rules-list li:last-child { border-bottom: none; }
+    .rules-list li::before { content: "✓ "; color: var(--teal); font-weight: 700; }
+
+    .history-link {
+      display: block;
+      text-align: center;
+      font-size: 12px;
+      color: var(--teal);
+      padding: 8px;
+      text-decoration: none;
+      border-top: 1px solid var(--border);
+    }
+    .history-link:hover { text-decoration: underline; }
+
+    /* ── Section divider ────────────────────────────── */
+    .section-note {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      padding: 4px 0 2px;
+    }
+
+    /* ── Home link ──────────────────────────────────── */
+    .home-link {
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .home-link:hover { color: white; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>
+      Stella's Sleep Tracker
+      <span>{{ log_date }}</span>
+    </h1>
+    <a href="/" class="home-link">← Home</a>
+  </div>
+  <div class="nav-row">
+    <a href="/sleep/{{ prev_date }}" class="nav-btn">‹ Prev</a>
+    {% if log_date != today %}
+      <a href="/sleep/{{ today }}" class="nav-btn today">Today</a>
+    {% endif %}
+    <a href="/sleep/{{ next_date }}" class="nav-btn">Next ›</a>
+    <a href="/sleep/history" class="nav-btn">History</a>
+    <span class="save-indicator" id="save-indicator">&nbsp;</span>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="main-col">
+
+    <!-- Summary Bar -->
+    <div class="summary-bar">
+      <div class="summary-item">
+        <div class="val" id="summary-oz">—</div>
+        <div class="lbl">oz bottles</div>
+      </div>
+      <div class="summary-item">
+        <div class="val" id="summary-sleep">—</div>
+        <div class="lbl">daytime sleep</div>
+      </div>
+      <div class="summary-hint" id="hint-sleep_total"></div>
+    </div>
+
+    <!-- ── MORNING ───────────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🌅</span>
+        <div>
+          <h2>Morning</h2>
+          <div class="sub">DWT 7:00 AM · Start day with a bottle in a bright room</div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <div class="hint show" id="hint-wake_note">Wake Stella at 7:00 AM daily — even after a rough night. Feed immediately in a bright, sunlit room.</div>
+
+        <div class="field-row">
+          <label for="wake_time">Wake time</label>
+          <div>
+            <input type="time" id="wake_time" data-field="wake_time" value="{{ row.wake_time or '' }}">
+            <div class="hint" id="hint-nap1_target"></div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <label for="out_of_crib_time">Out of crib</label>
+          <input type="time" id="out_of_crib_time" data-field="out_of_crib_time" value="{{ row.out_of_crib_time or '' }}">
+        </div>
+
+        <div class="check-row">
+          <input type="checkbox" id="morning_feed_done" data-field="morning_feed_done" {% if row.morning_feed_done %}checked{% endif %}>
+          <label for="morning_feed_done">First bottle given upon waking</label>
+        </div>
+
+        <div class="field-row">
+          <label>Bottle 1</label>
+          <div class="inline-group">
+            <input type="time" data-field="morning_bottle_time" value="{{ row.morning_bottle_time or '' }}">
+            <input type="number" data-field="morning_bottle_oz" value="{{ row.morning_bottle_oz or '' }}" min="0" max="12" step="0.5" placeholder="oz">
+            <span class="oz-label">oz</span>
+          </div>
+        </div>
+
+        <div class="hint" id="hint-bottle_total"></div>
+
+      </div>
+    </div>
+
+    <!-- ── BREAKFAST ─────────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🍳</span>
+        <div>
+          <h2>Breakfast</h2>
+          <div class="sub">~8:00 AM · Calorically dense: protein, fats, fruits, veggies, grains</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field-row">
+          <label for="breakfast_time">Time</label>
+          <input type="time" id="breakfast_time" data-field="breakfast_time" value="{{ row.breakfast_time or '' }}">
+        </div>
+        <div class="field-row">
+          <label for="breakfast_items">Foods</label>
+          <textarea id="breakfast_items" data-field="breakfast_items" placeholder="e.g. eggs, avocado, banana">{{ row.breakfast_items or '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NAP 1 ──────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">😴</span>
+        <div>
+          <h2>Nap 1</h2>
+          <div class="sub">~9:00 AM · 2-hr wake window · Place in crib awake</div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <div class="hint show" id="hint-nap1_target_inline">{{ hints.nap1_target or 'Enter wake time above to see Nap 1 target.' }}</div>
+
+        <div class="check-row">
+          <input type="checkbox" id="nap1_routine_done" data-field="nap1_routine_done" {% if row.nap1_routine_done %}checked{% endif %}>
+          <label for="nap1_routine_done">Routine completed (sound machine on, lights off)</label>
+        </div>
+
+        <div class="field-row">
+          <label for="nap1_sleep_time">Fell asleep</label>
+          <input type="time" id="nap1_sleep_time" data-field="nap1_sleep_time" value="{{ row.nap1_sleep_time or '' }}">
+        </div>
+
+        <div class="field-row">
+          <label for="nap1_wake_time">Woke up</label>
+          <div>
+            <input type="time" id="nap1_wake_time" data-field="nap1_wake_time" value="{{ row.nap1_wake_time or '' }}">
+            <div class="hint" id="hint-nap1_duration"></div>
+            <div class="hint warn" id="hint-nap1_short"></div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <label for="nap1_soothing_rounds">Soothing rounds</label>
+          <input type="number" id="nap1_soothing_rounds" data-field="nap1_soothing_rounds" value="{{ row.nap1_soothing_rounds or '' }}" min="0" max="20" placeholder="0">
+        </div>
+
+        <div class="check-row">
+          <input type="checkbox" id="nap1_feed_after" data-field="nap1_feed_after" {% if row.nap1_feed_after %}checked{% endif %}>
+          <label for="nap1_feed_after">Full bottle given after waking</label>
+        </div>
+
+        <div class="field-row">
+          <label for="nap1_solids">Solids</label>
+          <input type="text" id="nap1_solids" data-field="nap1_solids" value="{{ row.nap1_solids or '' }}" placeholder="any solids after nap">
+        </div>
+
+        <div class="hint show" id="hint-post_nap1_note">{{ hints.post_nap1_note or 'Give a full bottle immediately after Nap 1. Lunch around 12:00 PM.' }}</div>
+
+      </div>
+    </div>
+
+    <!-- ── LUNCH ──────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🥗</span>
+        <div>
+          <h2>Lunch</h2>
+          <div class="sub">~12:00 PM · Second solid meal of the day</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field-row">
+          <label for="lunch_time">Time</label>
+          <input type="time" id="lunch_time" data-field="lunch_time" value="{{ row.lunch_time or '' }}">
+        </div>
+        <div class="field-row">
+          <label for="lunch_items">Foods</label>
+          <textarea id="lunch_items" data-field="lunch_items" placeholder="e.g. pureed chicken, sweet potato, peas">{{ row.lunch_items or '' }}</textarea>
+        </div>
+
+        <div class="field-row">
+          <label>Top-off bottle</label>
+          <div class="inline-group">
+            <input type="time" data-field="topoff_time" value="{{ row.topoff_time or '' }}">
+            <input type="number" data-field="topoff_oz" value="{{ row.topoff_oz or '' }}" min="0" max="12" step="0.5" placeholder="oz">
+            <span class="oz-label">oz</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NAP 2 ──────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">😴</span>
+        <div>
+          <h2>Nap 2</h2>
+          <div class="sub">~1:30 PM · 2.5-hr wake window · Soothe up to 90 min crib time</div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <div class="hint show" id="hint-nap2_target">{{ hints.nap2_target or 'Nap 2 target will calculate after Nap 1 wake time is entered.' }}</div>
+
+        <div class="check-row">
+          <input type="checkbox" id="nap2_routine_done" data-field="nap2_routine_done" {% if row.nap2_routine_done %}checked{% endif %}>
+          <label for="nap2_routine_done">Routine completed</label>
+        </div>
+
+        <div class="field-row">
+          <label for="nap2_sleep_time">Fell asleep</label>
+          <input type="time" id="nap2_sleep_time" data-field="nap2_sleep_time" value="{{ row.nap2_sleep_time or '' }}">
+        </div>
+
+        <div class="field-row">
+          <label for="nap2_wake_time">Woke up</label>
+          <div>
+            <input type="time" id="nap2_wake_time" data-field="nap2_wake_time" value="{{ row.nap2_wake_time or '' }}">
+            <div class="hint" id="hint-nap2_duration"></div>
+            <div class="hint warn" id="hint-nap2_short"></div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <label for="nap2_soothing_rounds">Soothing rounds</label>
+          <input type="number" id="nap2_soothing_rounds" data-field="nap2_soothing_rounds" value="{{ row.nap2_soothing_rounds or '' }}" min="0" max="20" placeholder="0">
+        </div>
+
+        <div class="check-row">
+          <input type="checkbox" id="nap2_feed_after" data-field="nap2_feed_after" {% if row.nap2_feed_after %}checked{% endif %}>
+          <label for="nap2_feed_after">Full bottle given after waking</label>
+        </div>
+
+        <div class="field-row">
+          <label for="nap2_solids">Solids</label>
+          <input type="text" id="nap2_solids" data-field="nap2_solids" value="{{ row.nap2_solids or '' }}" placeholder="any solids after nap">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── SNACK ──────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🍎</span>
+        <div>
+          <h2>Snack</h2>
+          <div class="sub">Afternoon snack between Nap 2 and catnap</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field-row">
+          <label for="snack_time">Time</label>
+          <input type="time" id="snack_time" data-field="snack_time" value="{{ row.snack_time or '' }}">
+        </div>
+        <div class="field-row">
+          <label for="snack_items">Foods</label>
+          <input type="text" id="snack_items" data-field="snack_items" value="{{ row.snack_items or '' }}" placeholder="e.g. yogurt, puffs, fruit">
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CATNAP ─────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🐱</span>
+        <div>
+          <h2>Catnap</h2>
+          <div class="sub">~5:30 PM · 2-hr wake window · One cycle only (≤45 min) · Do NOT extend</div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <div class="hint show" id="hint-catnap_target">{{ hints.catnap_target or 'Catnap target will calculate after Nap 2 wake time is entered.' }}</div>
+        <div class="hint warn" id="hint-catnap_skipped">{{ hints.catnap_skipped or '' }}</div>
+
+        <div class="check-row">
+          <input type="checkbox" id="catnap_routine_done" data-field="catnap_routine_done" {% if row.catnap_routine_done %}checked{% endif %}>
+          <label for="catnap_routine_done">Routine completed</label>
+        </div>
+
+        <div class="field-row">
+          <label for="catnap_sleep_time">Fell asleep</label>
+          <input type="time" id="catnap_sleep_time" data-field="catnap_sleep_time" value="{{ row.catnap_sleep_time or '' }}">
+        </div>
+
+        <div class="field-row">
+          <label for="catnap_wake_time">Woke up</label>
+          <div>
+            <input type="time" id="catnap_wake_time" data-field="catnap_wake_time" value="{{ row.catnap_wake_time or '' }}">
+            <div class="hint" id="hint-catnap_duration"></div>
+            <div class="hint alert" id="hint-catnap_long"></div>
+            <div class="hint show" id="hint-bedtime_target">{{ hints.bedtime_target or 'Bedtime target will calculate after catnap wake time is entered.' }}</div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <label for="catnap_soothing_rounds">Soothing rounds</label>
+          <input type="number" id="catnap_soothing_rounds" data-field="catnap_soothing_rounds" value="{{ row.catnap_soothing_rounds or '' }}" min="0" max="20" placeholder="0">
+        </div>
+
+        <div class="check-row">
+          <input type="checkbox" id="catnap_feed_after" data-field="catnap_feed_after" {% if row.catnap_feed_after %}checked{% endif %}>
+          <label for="catnap_feed_after">Feed given after catnap</label>
+        </div>
+
+        <div class="field-row">
+          <label for="catnap_solids">Solids</label>
+          <input type="text" id="catnap_solids" data-field="catnap_solids" value="{{ row.catnap_solids or '' }}" placeholder="any solids after catnap">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── DINNER ─────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🍽️</span>
+        <div>
+          <h2>Dinner</h2>
+          <div class="sub">~6:30 PM</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field-row">
+          <label for="dinner_time">Time</label>
+          <input type="time" id="dinner_time" data-field="dinner_time" value="{{ row.dinner_time or '' }}">
+        </div>
+        <div class="field-row">
+          <label for="dinner_items">Foods</label>
+          <textarea id="dinner_items" data-field="dinner_items" placeholder="e.g. veggie pouches, chicken, fruit">{{ row.dinner_items or '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BEDTIME ─────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🌙</span>
+        <div>
+          <h2>Bedtime Routine</h2>
+          <div class="sub">~7:45 PM · Bottle → bath → diaper → PJs → story/song → sleep sack → sound machine → crib → lights off</div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <div class="check-row">
+          <input type="checkbox" id="bedtime_routine_done" data-field="bedtime_routine_done" {% if row.bedtime_routine_done %}checked{% endif %}>
+          <label for="bedtime_routine_done">Full bedtime routine completed</label>
+        </div>
+
+        <div class="field-row">
+          <label>Bedtime bottle</label>
+          <div class="inline-group">
+            <input type="time" data-field="bedtime_bottle_time" value="{{ row.bedtime_bottle_time or '' }}">
+            <input type="number" data-field="bedtime_bottle_oz" value="{{ row.bedtime_bottle_oz or '' }}" min="0" max="12" step="0.5" placeholder="oz">
+            <span class="oz-label">oz</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <label for="night_sleep_time">In crib / lights off</label>
+          <input type="time" id="night_sleep_time" data-field="night_sleep_time" value="{{ row.night_sleep_time or '' }}">
+        </div>
+
+        <div class="hint">Latest bedtime is 8:00 PM (13 hrs after DWT). Can be as early as 6:00 PM if overtired or naps were short.</div>
+
+      </div>
+    </div>
+
+    <!-- ── NIGHT WAKINGS ──────────────────────────────── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🌟</span>
+        <div>
+          <h2>Night Wakings</h2>
+          <div class="sub">Before 6:30 AM = nighttime · Use soothing rounds · 10-min wait minimum</div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <div class="field-row" style="margin-bottom:6px;">
+          <label for="night_wake_time">Morning wake</label>
+          <input type="time" id="night_wake_time" data-field="night_wake_time" value="{{ row.night_wake_time or '' }}">
+        </div>
+
+        <div class="section-note">Log each overnight waking below</div>
+
+        <!-- Column headers -->
+        <div class="waking-grid" style="margin-top:8px;">
+          <div class="waking-label">Wake time</div>
+          <div class="waking-label">Back to sleep</div>
+          <div class="waking-label">Fed?</div>
+          <div class="waking-label">Rounds</div>
+        </div>
+
+        {% for n in [1,2,3,4,5] %}
+        <div style="margin-top:8px;">
+          <div class="waking-row-label">Waking {{ n }}</div>
+          <div class="waking-grid" style="margin-top:4px;">
+            <input type="time" data-field="waking{{ n }}_time" value="{{ row['waking' ~ n ~ '_time'] or '' }}">
+            <input type="time" data-field="waking{{ n }}_return" value="{{ row['waking' ~ n ~ '_return'] or '' }}">
+            <div class="check-row" style="justify-content:center;">
+              <input type="checkbox" data-field="waking{{ n }}_fed" {% if row['waking' ~ n ~ '_fed'] %}checked{% endif %}>
+            </div>
+            <input type="number" data-field="waking{{ n }}_rounds" value="{{ row['waking' ~ n ~ '_rounds'] or '' }}" min="0" max="30" placeholder="0">
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+    </div>
+
+  </div><!-- /main-col -->
+
+  <!-- ── SIDEBAR ──────────────────────────────────── -->
+  <div class="sidebar">
+
+    <!-- Logged dates -->
+    <div class="side-card">
+      <h3>Recent Days</h3>
+      <div class="side-card-body" style="padding:0;">
+        <ul class="date-list">
+          {% for d in logged_dates %}
+          <li>
+            <a href="/sleep/{{ d }}" class="{{ 'active' if d == log_date else '' }}">
+              {% if d == today %}Today — {% endif %}{{ d }}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <a href="/sleep/history" class="history-link">View full history →</a>
+    </div>
+
+    <!-- Recent changes -->
+    <div class="side-card">
+      <h3>Recent Changes</h3>
+      <div class="side-card-body" style="padding:0 14px 12px;">
+        {% if recent_history %}
+        <ul class="history-list" id="history-list">
+          {% for h in recent_history %}
+          <li>
+            <span class="change-time">{{ h.changed_at[11:16] }}</span>
+            <div class="field-name">{{ h.field_name | replace('_', ' ') }}</div>
+            <div class="change-vals">
+              {% if h.old_value %}{{ h.old_value }} → {% endif %}{{ h.new_value }}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p style="font-size:13px;color:var(--muted);padding-top:8px;">No changes yet today.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Key rules quick ref -->
+    <div class="side-card">
+      <h3>Key Rules</h3>
+      <div class="side-card-body" style="padding: 6px 14px 12px;">
+        <ul class="rules-list">
+          <li>Always feed at the <strong>start</strong> of a wake window, never before sleep</li>
+          <li>Keep lights ON throughout the routine — off is the final step</li>
+          <li>Place Stella in crib <strong>sleepy but NOT drowsy</strong></li>
+          <li>No rocking or bouncing — cuddles during a book/song are fine</li>
+          <li>Completely dark room · continuous white noise · 68–72°F</li>
+          <li>24 oz minimum bottles daily · 4 bottles (6–7 oz each)</li>
+          <li>3–3.5 hrs total daytime sleep goal</li>
+          <li>Wait <strong>10 min minimum</strong> before a soothing round</li>
+          <li>Stay in crib ≤2 min per soothing round · leave even if not calm</li>
+        </ul>
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+</div><!-- /layout -->
+
+<script>
+const LOG_DATE = "{{ log_date }}";
+const indicator = document.getElementById('save-indicator');
+
+function fmt12(hhmm) {
+  if (!hhmm) return '';
+  const [hStr, mStr] = hhmm.split(':');
+  let h = parseInt(hStr, 10);
+  const m = mStr;
+  const ampm = h < 12 ? 'AM' : 'PM';
+  h = h % 12 || 12;
+  return `${h}:${m} ${ampm}`;
+}
+
+function addMinutes(hhmm, mins) {
+  if (!hhmm) return null;
+  const [h, m] = hhmm.split(':').map(Number);
+  const total = h * 60 + m + mins;
+  const nh = Math.floor(total / 60) % 24;
+  const nm = total % 60;
+  return `${String(nh).padStart(2,'0')}:${String(nm).padStart(2,'0')}`;
+}
+
+function napMins(sleepTime, wakeTime) {
+  if (!sleepTime || !wakeTime) return null;
+  const [sh, sm] = sleepTime.split(':').map(Number);
+  const [wh, wm] = wakeTime.split(':').map(Number);
+  const dur = (wh * 60 + wm) - (sh * 60 + sm);
+  return dur > 0 ? dur : null;
+}
+
+// Show/hide hint elements
+function setHint(id, text, show) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (text !== undefined) el.textContent = text;
+  el.classList.toggle('show', !!show);
+}
+
+function updateSummary(hints) {
+  // Bottle total
+  const bottleEl = document.getElementById('summary-oz');
+  if (hints.bottle_total) {
+    const m = hints.bottle_total.match(/([\d.]+)\s*oz logged/);
+    bottleEl.textContent = m ? m[1] + ' oz' : hints.bottle_total;
+  }
+  // Sleep total
+  const sleepEl = document.getElementById('summary-sleep');
+  const sleepHint = document.getElementById('hint-sleep_total');
+  if (hints.sleep_total) {
+    const m = hints.sleep_total.match(/(\d+h\s*\d+m)/);
+    sleepEl.textContent = m ? m[1] : '—';
+    sleepHint.textContent = hints.sleep_total;
+  }
+}
+
+function applyHints(hints) {
+  const hintMap = {
+    'wake_note':       ['hint-wake_note',       true,  false],
+    'nap1_target':     ['hint-nap1_target',      true,  false],
+    'nap1_target':     ['hint-nap1_target_inline', true, false],
+    'post_nap1_note':  ['hint-post_nap1_note',   true,  false],
+    'nap2_target':     ['hint-nap2_target',      true,  false],
+    'catnap_target':   ['hint-catnap_target',    true,  false],
+    'catnap_skipped':  ['hint-catnap_skipped',   true,  true ],
+    'bedtime_target':  ['hint-bedtime_target',   true,  false],
+    'nap1_short':      ['hint-nap1_short',       true,  true ],
+    'nap1_duration':   ['hint-nap1_duration',    true,  false],
+    'nap2_short':      ['hint-nap2_short',       true,  true ],
+    'nap2_duration':   ['hint-nap2_duration',    true,  false],
+    'catnap_long':     ['hint-catnap_long',      true,  true ],
+    'catnap_duration': ['hint-catnap_duration',  true,  false],
+    'bottle_total':    ['hint-bottle_total',     true,  false],
+    'sleep_total':     ['hint-sleep_total',      true,  false],
+  };
+
+  // For nap1_target, update both elements
+  for (const [key, val] of Object.entries(hints)) {
+    if (key === 'nap1_target') {
+      setHint('hint-nap1_target', val, true);
+      setHint('hint-nap1_target_inline', val, true);
+      continue;
+    }
+    const entry = hintMap[key];
+    if (entry) setHint(entry[0], val, true);
+  }
+
+  // Hide hints whose keys are absent from server response
+  for (const [key, entry] of Object.entries(hintMap)) {
+    if (key === 'nap1_target') continue;
+    if (!(key in hints)) {
+      const el = document.getElementById(entry[0]);
+      if (el && !el.classList.contains('show') || entry[2] === false) {
+        // only hide dynamic hints, not static ones
+      }
+    }
+  }
+
+  updateSummary(hints);
+}
+
+function saveField(field, value) {
+  indicator.textContent = 'Saving…';
+  indicator.className = 'save-indicator saving';
+
+  fetch(`/sleep/${LOG_DATE}/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ field, value })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      applyHints(data.hints);
+      indicator.textContent = 'Saved ✓';
+      indicator.className = 'save-indicator saved';
+      setTimeout(() => {
+        indicator.textContent = '';
+        indicator.className = 'save-indicator';
+      }, 2000);
+    } else {
+      indicator.textContent = 'Error';
+      indicator.className = 'save-indicator error';
+    }
+  })
+  .catch(() => {
+    indicator.textContent = 'Error';
+    indicator.className = 'save-indicator error';
+  });
+}
+
+// Wire up all inputs
+document.querySelectorAll('[data-field]').forEach(el => {
+  const field = el.dataset.field;
+
+  if (el.type === 'checkbox') {
+    el.addEventListener('change', () => saveField(field, el.checked ? 1 : 0));
+  } else if (el.type === 'time') {
+    el.addEventListener('change', () => saveField(field, el.value));
+  } else if (el.tagName === 'TEXTAREA') {
+    el.addEventListener('blur', () => saveField(field, el.value));
+  } else {
+    el.addEventListener('blur', () => saveField(field, el.value));
+    el.addEventListener('change', () => saveField(field, el.value));
+  }
+});
+
+// Apply initial hints from server render
+const initialHints = {{ hints | tojson }};
+applyHints(initialHints);
+
+// Initialize summary display
+(function initSummary() {
+  const ozEl = document.getElementById('summary-oz');
+  const sleepEl = document.getElementById('summary-sleep');
+  if (initialHints.bottle_total) {
+    const m = initialHints.bottle_total.match(/([\d.]+)\s*oz/);
+    if (m) ozEl.textContent = m[1] + ' oz';
+  }
+  if (initialHints.sleep_total) {
+    const m = initialHints.sleep_total.match(/(\d+h\s*\d+m)/);
+    if (m) sleepEl.textContent = m[1];
+  }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stella's Sleep Tracker — History</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --teal: #2d7a6b;
+      --teal-light: #e8f5f1;
+      --border: #d6ece6;
+      --bg: #f4f9f7;
+      --card: #ffffff;
+      --text: #1a3330;
+      --muted: #5a7a75;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header {
+      background: var(--teal);
+      color: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    header h1 { font-size: 18px; font-weight: 700; }
+    .nav-row { display: flex; gap: 8px; align-items: center; }
+    .nav-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.35);
+      color: white;
+      padding: 5px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.3); }
+
+    .container { max-width: 700px; margin: 28px auto; padding: 0 16px; }
+
+    h2 { font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+
+    .day-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      text-decoration: none;
+      color: var(--text);
+      transition: box-shadow 0.15s, transform 0.1s;
+    }
+    .day-card:hover { box-shadow: 0 4px 16px rgba(45,122,107,0.12); transform: translateY(-1px); }
+
+    .day-date { font-size: 16px; font-weight: 700; }
+    .day-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    .changes-badge {
+      background: var(--teal-light);
+      color: var(--teal);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .empty { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 15px; }
+    .home-link { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px; }
+    .home-link:hover { color: white; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Sleep Tracker — History</h1>
+    <a href="/" class="home-link">← Home</a>
+  </div>
+  <div class="nav-row">
+    <a href="/sleep/" class="nav-btn">Today</a>
+  </div>
+</header>
+
+<div class="container">
+  <h2>All Logged Days</h2>
+
+  {% if days %}
+    {% for day in days %}
+    <a href="/sleep/{{ day.date }}" class="day-card">
+      <div>
+        <div class="day-date">{{ day.date }}</div>
+        <div class="day-meta">Click to view or edit this day's log</div>
+      </div>
+      <div class="changes-badge">
+        {{ day.changes }} change{{ 's' if day.changes != 1 else '' }}
+      </div>
+    </a>
+    {% endfor %}
+  {% else %}
+    <div class="empty">No days logged yet. <a href="/sleep/" style="color:var(--teal);">Start tracking today →</a></div>
+  {% endif %}
+</div>
+
+</body>
+</html>
