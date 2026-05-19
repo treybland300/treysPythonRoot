@@ -306,29 +306,6 @@
     .date-list li a:hover { color: #1a5a4d; font-weight: 600; }
     .date-list li a.active { font-weight: 700; color: #1a5a4d; }
 
-    /* History list */
-    .history-list { list-style: none; }
-    .history-list li {
-      padding: 6px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 12px;
-      color: var(--text);
-    }
-    .history-list li:last-child { border-bottom: none; }
-    .history-list .field-name {
-      font-weight: 700;
-      color: var(--teal);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .history-list .change-vals {
-      color: var(--muted);
-      font-size: 11px;
-      margin-top: 1px;
-    }
-    .history-list .change-time { float: right; color: #aaa; font-size: 10px; }
-
     /* Key rules quick-ref */
     .rules-list { list-style: none; }
     .rules-list li {
@@ -798,29 +775,8 @@
           {% endfor %}
         </ul>
       </div>
-      <a href="/sleep/history" class="history-link">View full history →</a>
-    </div>
-
-    <!-- Recent changes -->
-    <div class="side-card">
-      <h3>Recent Changes</h3>
-      <div class="side-card-body" style="padding:0 14px 12px;">
-        {% if recent_history %}
-        <ul class="history-list" id="history-list">
-          {% for h in recent_history %}
-          <li>
-            <span class="change-time">{{ h.changed_at | eastern_time }}</span>
-            <div class="field-name">{{ h.field_name | replace('_', ' ') }}</div>
-            <div class="change-vals">
-              {% if h.old_value %}{{ h.old_value }} → {% endif %}{{ h.new_value }}
-            </div>
-          </li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p style="font-size:13px;color:var(--muted);padding-top:8px;">No changes yet today.</p>
-        {% endif %}
-      </div>
+      <a href="/sleep/history" class="history-link">All days →</a>
+      <a href="/sleep/history/{{ log_date }}" class="history-link" style="border-top:none;">Changes for today →</a>
     </div>
 
     <!-- Key rules quick ref -->

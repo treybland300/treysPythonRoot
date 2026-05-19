@@ -27,8 +27,7 @@ def eastern_time_filter(utc_str):
         eastern = dt.astimezone(_EASTERN)
         h = eastern.hour % 12 or 12
         suffix = 'AM' if eastern.hour < 12 else 'PM'
-        tz_abbr = 'EDT' if eastern.dst().seconds else 'EST'
-        return f"{h}:{eastern.strftime('%M')} {suffix} {tz_abbr}"
+        return f"{h}:{eastern.strftime('%M')} {suffix}"
     except Exception:
         return utc_str[11:16]
 DB = os.path.join(os.path.dirname(__file__), 'sleep.db')
@@ -299,10 +298,6 @@ def day(log_date):
     conn = get_db()
     ensure_day(log_date, conn)
     row = conn.execute('SELECT * FROM daily_logs WHERE date=?', (log_date,)).fetchone()
-    recent_history = conn.execute(
-        'SELECT * FROM field_history WHERE date=? ORDER BY changed_at DESC LIMIT 25',
-        (log_date,)
-    ).fetchall()
     logged_dates = conn.execute(
         'SELECT date FROM daily_logs ORDER BY date DESC LIMIT 30'
     ).fetchall()
@@ -322,7 +317,6 @@ def day(log_date):
         prev_date=prev_date,
         next_date=next_date,
         today=today,
-        recent_history=recent_history,
         logged_dates=[d['date'] for d in logged_dates],
     )
 
