@@ -809,7 +809,7 @@
         <ul class="history-list" id="history-list">
           {% for h in recent_history %}
           <li>
-            <span class="change-time">{{ h.changed_at[11:16] }}</span>
+            <span class="change-time">{{ h.changed_at | eastern_time }}</span>
             <div class="field-name">{{ h.field_name | replace('_', ' ') }}</div>
             <div class="change-vals">
               {% if h.old_value %}{{ h.old_value }} → {% endif %}{{ h.new_value }}

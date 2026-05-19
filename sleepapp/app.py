@@ -3,7 +3,34 @@ import sqlite3
 import os
 from datetime import date, datetime, timedelta
 
+try:
+    from zoneinfo import ZoneInfo
+    _EASTERN = ZoneInfo('America/New_York')
+    _UTC = ZoneInfo('UTC')
+except ImportError:
+    _EASTERN = None
+    _UTC = None
+
 sleep_bp = Blueprint('sleep', __name__, template_folder='templates')
+
+
+@sleep_bp.app_template_filter('eastern_time')
+def eastern_time_filter(utc_str):
+    """Convert a SQLite UTC timestamp string to Eastern time (EST/EDT)."""
+    if not utc_str:
+        return ''
+    if _EASTERN is None:
+        return utc_str[11:16]
+    try:
+        dt = datetime.strptime(utc_str[:19], '%Y-%m-%d %H:%M:%S')
+        dt = dt.replace(tzinfo=_UTC)
+        eastern = dt.astimezone(_EASTERN)
+        h = eastern.hour % 12 or 12
+        suffix = 'AM' if eastern.hour < 12 else 'PM'
+        tz_abbr = 'EDT' if eastern.dst().seconds else 'EST'
+        return f"{h}:{eastern.strftime('%M')} {suffix} {tz_abbr}"
+    except Exception:
+        return utc_str[11:16]
 DB = os.path.join(os.path.dirname(__file__), 'sleep.db')
 
 ALLOWED_FIELDS = {
