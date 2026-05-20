@@ -383,7 +383,7 @@
         <div class="val" id="summary-sleep">—</div>
         <div class="lbl">daytime sleep</div>
       </div>
-      <div class="summary-hint" id="hint-sleep_total"></div>
+      <div class="summary-hint" id="hint-sleep_total">{{ hints.sleep_total or '' }}</div>
     </div>
 
     <!-- ── MORNING ───────────────────────────────────── -->
@@ -403,7 +403,7 @@
           <label for="wake_time">Wake time</label>
           <div>
             <input type="time" id="wake_time" data-field="wake_time" value="{{ row.wake_time or '' }}">
-            <div class="hint" id="hint-nap1_target"></div>
+            <div class="hint{% if hints.nap1_target %} show{% endif %}" id="hint-nap1_target">{{ hints.nap1_target or '' }}</div>
           </div>
         </div>
 
@@ -426,7 +426,7 @@
           </div>
         </div>
 
-        <div class="hint" id="hint-bottle_total"></div>
+        <div class="hint{% if hints.bottle_total %} show{% endif %}" id="hint-bottle_total">{{ hints.bottle_total or '' }}</div>
 
       </div>
     </div>
@@ -479,8 +479,8 @@
           <label for="nap1_wake_time">Woke up</label>
           <div>
             <input type="time" id="nap1_wake_time" data-field="nap1_wake_time" value="{{ row.nap1_wake_time or '' }}">
-            <div class="hint" id="hint-nap1_duration"></div>
-            <div class="hint warn" id="hint-nap1_short"></div>
+            <div class="hint{% if hints.nap1_duration %} show{% endif %}" id="hint-nap1_duration">{{ hints.nap1_duration or '' }}</div>
+            <div class="hint warn{% if hints.nap1_short %} show{% endif %}" id="hint-nap1_short">{{ hints.nap1_short or '' }}</div>
           </div>
         </div>
 
@@ -561,8 +561,8 @@
           <label for="nap2_wake_time">Woke up</label>
           <div>
             <input type="time" id="nap2_wake_time" data-field="nap2_wake_time" value="{{ row.nap2_wake_time or '' }}">
-            <div class="hint" id="hint-nap2_duration"></div>
-            <div class="hint warn" id="hint-nap2_short"></div>
+            <div class="hint{% if hints.nap2_duration %} show{% endif %}" id="hint-nap2_duration">{{ hints.nap2_duration or '' }}</div>
+            <div class="hint warn{% if hints.nap2_short %} show{% endif %}" id="hint-nap2_short">{{ hints.nap2_short or '' }}</div>
           </div>
         </div>
 
@@ -617,7 +617,7 @@
       <div class="card-body">
 
         <div class="hint show" id="hint-catnap_target">{{ hints.catnap_target or 'Catnap target will calculate after Nap 2 wake time is entered.' }}</div>
-        <div class="hint warn" id="hint-catnap_skipped">{{ hints.catnap_skipped or '' }}</div>
+        <div class="hint warn{% if hints.catnap_skipped %} show{% endif %}" id="hint-catnap_skipped">{{ hints.catnap_skipped or '' }}</div>
 
         <div class="check-row">
           <input type="checkbox" id="catnap_routine_done" data-field="catnap_routine_done" {% if row.catnap_routine_done %}checked{% endif %}>
@@ -633,8 +633,8 @@
           <label for="catnap_wake_time">Woke up</label>
           <div>
             <input type="time" id="catnap_wake_time" data-field="catnap_wake_time" value="{{ row.catnap_wake_time or '' }}">
-            <div class="hint" id="hint-catnap_duration"></div>
-            <div class="hint alert" id="hint-catnap_long"></div>
+            <div class="hint{% if hints.catnap_duration %} show{% endif %}" id="hint-catnap_duration">{{ hints.catnap_duration or '' }}</div>
+            <div class="hint alert{% if hints.catnap_long %} show{% endif %}" id="hint-catnap_long">{{ hints.catnap_long or '' }}</div>
             <div class="hint show" id="hint-bedtime_target">{{ hints.bedtime_target or 'Bedtime target will calculate after catnap wake time is entered.' }}</div>
           </div>
         </div>
