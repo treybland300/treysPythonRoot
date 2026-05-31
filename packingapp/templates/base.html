@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}PackTrip{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #151820;
+      --card: #1c2030;
+      --border: #252a3a;
+      --accent: #4fffb0;
+      --accent2: #7b61ff;
+      --danger: #ff4f6a;
+      --text: #e8eaf2;
+      --muted: #6b7280;
+      --trey: #4fffb0;
+      --wife: #ff80bf;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+    .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--accent); text-decoration: none; letter-spacing: -0.5px; }
+    .nav-logo span { color: var(--text); }
+    .nav-links { display: flex; gap: 0.25rem; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.85rem; font-weight: 500; padding: 0.4rem 0.8rem; border-radius: 6px; transition: all 0.15s; }
+    .nav-links a:hover { color: var(--text); background: var(--border); }
+    main { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem; }
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-family: 'Syne', sans-serif; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
+    .page-header p { color: var(--muted); margin-top: 0.4rem; font-size: 0.9rem; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 0.75rem; transition: border-color 0.15s; }
+    .card:hover { border-color: #353a52; }
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 500; font-family: 'DM Sans', sans-serif; border: none; cursor: pointer; text-decoration: none; transition: all 0.15s; }
+    .btn-primary { background: var(--accent); color: #0d0f14; font-weight: 600; }
+    .btn-primary:hover { background: #38f0a0; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); border-color: #353a52; }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid transparent; padding: 0.3rem 0.6rem; font-size: 0.78rem; }
+    .btn-danger:hover { background: rgba(255,79,106,0.1); border-color: var(--danger); }
+    .btn-trey { background: rgba(79,255,176,0.12); color: var(--trey); border: 1px solid rgba(79,255,176,0.25); font-size: 0.8rem; padding: 0.35rem 0.8rem; }
+    .btn-trey:hover { background: rgba(79,255,176,0.2); }
+    .btn-wife { background: rgba(255,128,191,0.12); color: var(--wife); border: 1px solid rgba(255,128,191,0.25); font-size: 0.8rem; padding: 0.35rem 0.8rem; }
+    .btn-wife:hover { background: rgba(255,128,191,0.2); }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    input[type="text"], input[type="date"], select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.9rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; transition: border-color 0.15s; outline: none; }
+    input:focus, select:focus { border-color: var(--accent2); }
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.3px; }
+    .badge-trey { background: rgba(79,255,176,0.15); color: var(--trey); }
+    .badge-wife { background: rgba(255,128,191,0.15); color: var(--wife); }
+    .badge-pending { background: rgba(107,114,128,0.15); color: var(--muted); }
+    .progress-wrap { background: var(--border); border-radius: 99px; height: 6px; overflow: hidden; margin: 0.75rem 0; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 99px; transition: width 0.4s ease; }
+    .empty { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .empty h3 { font-family: 'Syne', sans-serif; color: var(--text); margin-bottom: 0.4rem; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mt-4 { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a class="nav-logo" href="/">Pack<span>Trip</span></a>
+    <div class="nav-links">
+      <a href="/">Trips</a>
+      <a href="/master">Master List</a>
+      <a href="/trip/new" style="color: var(--accent);">+ New Trip</a>
+    </div>
+  </nav>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

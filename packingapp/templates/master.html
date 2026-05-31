@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Master List — PackTrip{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Master List</h1>
+  <p>Items you can add to any trip</p>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;">
+  <p style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:1rem;">Add New Item</p>
+  <form method="POST" action="/master/add">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+      <div class="form-group" style="margin:0;">
+        <label>Item Name</label>
+        <input type="text" name="name" placeholder="e.g. Sunscreen" required />
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label>Category</label>
+        <input type="text" name="category" placeholder="e.g. Toiletries" required />
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top:0.75rem;">Add Item</button>
+  </form>
+</div>
+
+{% if items %}
+  {% set ns = namespace(current_cat='') %}
+  {% for item in items %}
+    {% if item.category != ns.current_cat %}
+      {% set ns.current_cat = item.category %}
+      <p style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin: 1.25rem 0 0.5rem;">{{ item.category }}</p>
+    {% endif %}
+    <div class="card flex justify-between items-center" style="padding:0.85rem 1.25rem;">
+      <span style="font-size:0.92rem;">{{ item.name }}</span>
+      <form method="POST" action="/master/delete/{{ item.id }}">
+        <button type="submit" class="btn btn-danger">✕ Remove</button>
+      </form>
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="empty">
+    <div class="empty-icon">📋</div>
+    <h3>No items yet</h3>
+    <p>Add items above to build your master packing list</p>
+  </div>
+{% endif %}
+{% endblock %}

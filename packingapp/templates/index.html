@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}My Trips — PackTrip{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center">
+  <div>
+    <h1>Your Trips</h1>
+    <p>Track what's packed for every adventure</p>
+  </div>
+  <a href="/trip/new" class="btn btn-primary">+ New Trip</a>
+</div>
+
+{% if trips %}
+  {% for trip in trips %}
+  <div class="card">
+    <div class="flex justify-between items-center">
+      <div>
+        <a href="/trip/{{ trip.id }}" style="font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:700; color:var(--text); text-decoration:none;">
+          {{ trip.name }}
+        </a>
+        <p style="color:var(--muted); font-size:0.82rem; margin-top:0.2rem;">📅 {{ trip.trip_date }}</p>
+      </div>
+      <a href="/trip/{{ trip.id }}" class="btn btn-ghost">View →</a>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="empty">
+    <div class="empty-icon">🧳</div>
+    <h3>No trips yet</h3>
+    <p>Create your first trip to get started</p>
+    <a href="/trip/new" class="btn btn-primary" style="margin-top:1.25rem;">Create a Trip</a>
+  </div>
+{% endif %}
+{% endblock %}

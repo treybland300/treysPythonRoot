@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ trip.name }} — PackTrip{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center">
+  <div>
+    <h1>{{ trip.name }}</h1>
+    <p>📅 {{ trip.trip_date }}</p>
+  </div>
+  <form method="POST" action="/trip/{{ trip.id }}/delete"
+    onsubmit="return confirm('Delete this trip?')">
+    <button type="submit" class="btn btn-danger">Delete Trip</button>
+  </form>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;">
+  <div class="flex justify-between items-center">
+    <span style="font-size:0.85rem; color:var(--muted);">{{ packed }} of {{ total }} packed</span>
+    <span style="font-family:'Syne',sans-serif; font-weight:700; font-size:1.1rem; color:var(--accent);">{{ progress }}%</span>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar" style="width:{{ progress }}%;"></div>
+  </div>
+  {% if progress == 100 %}
+  <p style="text-align:center; color:var(--accent); font-size:0.85rem; margin-top:0.5rem;">🎉 All packed!</p>
+  {% endif %}
+</div>
+
+{% if items %}
+  {% set ns = namespace(current_cat='') %}
+  {% for item in items %}
+    {% if item.category != ns.current_cat %}
+      {% set ns.current_cat = item.category %}
+      <p style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin: 1.25rem 0 0.5rem;">{{ item.category }}</p>
+    {% endif %}
+
+    <div class="card flex justify-between items-center" style="padding:0.85rem 1.25rem;
+      {% if item.packed_by %}opacity:0.65;{% endif %}">
+      <div>
+        <span style="font-size:0.92rem; {% if item.packed_by %}text-decoration:line-through; color:var(--muted);{% endif %}">
+          {{ item.name }}
+        </span>
+        {% if item.packed_by %}
+          <br>
+          <span class="badge {% if item.packed_by == 'Trey' %}badge-trey{% else %}badge-wife{% endif %}" style="margin-top:0.3rem;">
+            ✓ {{ item.packed_by }}
+          </span>
+        {% endif %}
+      </div>
+
+      <div class="flex gap-2">
+        {% if item.packed_by %}
+          <form method="POST" action="/trip/{{ trip.id }}/unpack/{{ item.id }}">
+            <button type="submit" class="btn btn-ghost" style="font-size:0.78rem; padding:0.3rem 0.7rem;">Undo</button>
+          </form>
+        {% else %}
+          <form method="POST" action="/trip/{{ trip.id }}/pack/{{ item.id }}">
+            <input type="hidden" name="packer" value="Trey" />
+            <button type="submit" class="btn btn-trey">Trey</button>
+          </form>
+          <form method="POST" action="/trip/{{ trip.id }}/pack/{{ item.id }}">
+            <input type="hidden" name="packer" value="Wife" />
+            <button type="submit" class="btn btn-wife">Wife</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="empty">
+    <div class="empty-icon">🎒</div>
+    <h3>No items on this trip</h3>
+    <p>Edit the trip to add items from your master list</p>
+  </div>
+{% endif %}
+
+<a href="/" class="btn btn-ghost" style="margin-top:1.5rem;">← All Trips</a>
+{% endblock %}

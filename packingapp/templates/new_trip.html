@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}New Trip — PackTrip{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>New Trip</h1>
+  <p>Name your trip and choose what to pack</p>
+</div>
+
+<form method="POST" action="/trip/new">
+  <div class="card" style="margin-bottom:1rem;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+      <div class="form-group" style="margin:0;">
+        <label>Trip Name</label>
+        <input type="text" name="name" placeholder="e.g. Beach Weekend" required />
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label>Date</label>
+        <input type="date" name="trip_date" required />
+      </div>
+    </div>
+  </div>
+
+  {% if items %}
+  <div class="card">
+    <p style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:1rem;">Select Items to Pack</p>
+    <p style="color:var(--muted); font-size:0.82rem; margin-bottom:1.25rem;">Choose from your master list</p>
+
+    {% set ns = namespace(current_cat='') %}
+    {% for item in items %}
+      {% if item.category != ns.current_cat %}
+        {% set ns.current_cat = item.category %}
+        <p style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin: 1rem 0 0.5rem;">{{ item.category }}</p>
+      {% endif %}
+      <label style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0; cursor:pointer; text-transform:none; letter-spacing:0; font-size:0.9rem; color:var(--text);">
+        <input type="checkbox" name="items" value="{{ item.id }}"
+          style="width:16px; height:16px; accent-color:var(--accent); cursor:pointer;" />
+        {{ item.name }}
+      </label>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <div class="empty-icon">📋</div>
+    <h3>No items in master list</h3>
+    <p>Add some items to your <a href="/master" style="color:var(--accent);">master list</a> first</p>
+  </div>
+  {% endif %}
+
+  <div class="flex gap-2" style="margin-top:1.25rem;">
+    <button type="submit" class="btn btn-primary">Create Trip →</button>
+    <a href="/" class="btn btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}
