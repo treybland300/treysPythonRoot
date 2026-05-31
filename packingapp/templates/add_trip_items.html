@@ -2,13 +2,12 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>New Trip</title>
+    <title>Add Items to {{ trip.name }}</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; background: #f5f5f5; }
         h1 { color: #c0622f; }
         .nav a { background: #c0622f; color: white; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 15px; }
         .form-card { background: white; border-radius: 12px; padding: 16px; margin: 16px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-        input[type=text], input[type=date] { width: 100%; padding: 10px; margin: 6px 0 12px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
         button[type=submit] { background: #c0622f; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 15px; width: 100%; margin-top: 10px; cursor: pointer; }
         .category { margin-top: 16px; }
         .category-header { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 6px; }
@@ -17,46 +16,42 @@
         .item-check { background: white; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .item-check input[type=checkbox], .select-all-row input[type=checkbox], .global-all input[type=checkbox] { width: 22px; height: 22px; flex-shrink: 0; }
         .global-all { background: #1e3a2f; color: white; border-radius: 8px; padding: 14px 16px; margin: 12px 0; display: flex; align-items: center; gap: 12px; font-weight: bold; font-size: 16px; }
-        .empty { color: #aaa; text-align: center; padding: 20px; }
+        .empty { color: #aaa; text-align: center; padding: 30px; }
         label { cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="nav"><a href="/">← Home</a></div>
-    <h1>✈️ New Trip</h1>
+    <div class="nav"><a href="/trip/{{ trip.id }}">← Back to {{ trip.name }}</a></div>
+    <h1>➕ Add Items</h1>
+    <p style="color:#888;">Select additional items to add to <strong>{{ trip.name }}</strong></p>
     <div class="form-card">
-        <form method="POST" action="/trip/new" id="tripForm">
-            <label>Trip Name</label>
-            <input type="text" name="name" placeholder="e.g. Beach Weekend" required>
-            <label>Date</label>
-            <input type="date" name="trip_date" required>
-            <h3>Select Items to Pack</h3>
-            {% if items %}
-                <div class="global-all">
-                    <input type="checkbox" id="selectAll">
-                    <label for="selectAll" style="color:white;">Select All Items</label>
+        {% if items %}
+        <form method="POST">
+            <div class="global-all">
+                <input type="checkbox" id="selectAll">
+                <label for="selectAll" style="color:white;">Select All Items</label>
+            </div>
+            {% set categories = items | map(attribute='category') | unique | list %}
+            {% for cat in categories %}
+            <div class="category">
+                <div class="category-header"><h3>{{ cat }}</h3></div>
+                <div class="select-all-row">
+                    <input type="checkbox" class="cat-all" data-cat="{{ cat }}" id="catAll_{{ loop.index }}">
+                    <label for="catAll_{{ loop.index }}">Select all in {{ cat }}</label>
                 </div>
-                {% set categories = items | map(attribute='category') | unique | list %}
-                {% for cat in categories %}
-                <div class="category">
-                    <div class="category-header"><h3>{{ cat }}</h3></div>
-                    <div class="select-all-row">
-                        <input type="checkbox" class="cat-all" data-cat="{{ cat }}" id="catAll_{{ loop.index }}">
-                        <label for="catAll_{{ loop.index }}">Select all in {{ cat }}</label>
-                    </div>
-                    {% for item in items if item.category == cat %}
-                    <div class="item-check">
-                        <input type="checkbox" name="items" value="{{ item.id }}" id="item{{ item.id }}" class="item-cb cat-{{ cat | replace(' ', '_') }}">
-                        <label for="item{{ item.id }}">{{ item.name }}</label>
-                    </div>
-                    {% endfor %}
+                {% for item in items if item.category == cat %}
+                <div class="item-check">
+                    <input type="checkbox" name="items" value="{{ item.id }}" id="item{{ item.id }}" class="item-cb cat-{{ cat | replace(' ', '_') }}">
+                    <label for="item{{ item.id }}">{{ item.name }}</label>
                 </div>
                 {% endfor %}
-            {% else %}
-                <p class="empty">No items in master list yet. <a href="/master">Add some first!</a></p>
-            {% endif %}
-            <button type="submit">Create Trip</button>
+            </div>
+            {% endfor %}
+            <button type="submit">Add Selected Items</button>
         </form>
+        {% else %}
+            <p class="empty">All master list items are already on this trip!</p>
+        {% endif %}
     </div>
     <script>
         document.getElementById('selectAll').addEventListener('change', function() {

@@ -1,78 +1,118 @@
-{% extends "base.html" %}
-{% block title %}{{ trip.name }} — PackTrip{% endblock %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ trip.name }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; background: #f5f5f5; }
+        h1 { color: #c0622f; }
+        .nav a { background: #c0622f; color: white; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 15px; }
+        .progress-card { background: #1e3a2f; color: white; border-radius: 12px; padding: 20px; margin: 16px 0; text-align: center; }
+        .progress-card .pct { font-size: 48px; font-weight: bold; }
+        .progress-bar { background: #444; border-radius: 10px; height: 10px; margin: 10px 0; }
+        .progress-fill { background: #c0622f; border-radius: 10px; height: 10px; transition: width 0.3s ease; }
+        .progress-label { font-size: 14px; opacity: 0.85; }
+        .category { margin-top: 20px; }
+        .category h3 { color: #555; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+        .item-row { background: white; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .item-name { font-size: 16px; margin-bottom: 8px; }
+        .item-name.packed { text-decoration: line-through; color: #aaa; }
+        .packed-by { font-size: 13px; color: #27ae60; margin-bottom: 8px; }
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn { padding: 8px 14px; border-radius: 8px; font-size: 14px; cursor: pointer; border: none; }
+        .btn-user { background: #c0622f; color: white; }
+        .btn-unpack { background: #eee; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/">← Home</a> &nbsp;
+        <a href="/trip/{{ trip.id }}/add_items">➕ Add Items</a>
+    </div>
+    <h1>🧳 {{ trip.name }}</h1>
+    <p style="color:#888;">{{ trip.trip_date }}</p>
 
-{% block content %}
-<div class="page-header flex justify-between items-center">
-  <div>
-    <h1>{{ trip.name }}</h1>
-    <p>📅 {{ trip.trip_date }}</p>
-  </div>
-  <form method="POST" action="/trip/{{ trip.id }}/delete"
-    onsubmit="return confirm('Delete this trip?')">
-    <button type="submit" class="btn btn-danger">Delete Trip</button>
-  </form>
-</div>
+    <div class="progress-card">
+        <div class="pct" id="pct">{{ pct }}%</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:{{ pct }}%"></div></div>
+        <div class="progress-label" id="progressLabel">{{ packed }} of {{ total }} items packed</div>
+    </div>
 
-<div class="card" style="margin-bottom:1.5rem;">
-  <div class="flex justify-between items-center">
-    <span style="font-size:0.85rem; color:var(--muted);">{{ packed }} of {{ total }} packed</span>
-    <span style="font-family:'Syne',sans-serif; font-weight:700; font-size:1.1rem; color:var(--accent);">{{ progress }}%</span>
-  </div>
-  <div class="progress-wrap">
-    <div class="progress-bar" style="width:{{ progress }}%;"></div>
-  </div>
-  {% if progress == 100 %}
-  <p style="text-align:center; color:var(--accent); font-size:0.85rem; margin-top:0.5rem;">🎉 All packed!</p>
-  {% endif %}
-</div>
+    {% set trip_categories = items | map(attribute='category') | unique | list %}
+    {% for cat in trip_categories %}
+    <div class="category">
+        <h3>{{ cat }}</h3>
+        {% for item in items if item.category == cat %}
+        <div class="item-row" id="row-{{ item.id }}">
+            <div class="item-name {% if item.packed_by %}packed{% endif %}" id="name-{{ item.id }}">{{ item.name }}</div>
+            <div id="status-{{ item.id }}">
+            {% if item.packed_by %}
+                <div class="packed-by">✅ Packed by {{ item.packed_by }}</div>
+                <div class="btn-row">
+                    <button class="btn btn-unpack" onclick="unpackItem({{ trip.id }}, {{ item.id }})">Undo</button>
+                </div>
+            {% else %}
+                <div class="btn-row">
+                    {% for user in active_users %}
+                    <button class="btn btn-user" onclick="packItem({{ trip.id }}, {{ item.id }}, '{{ user.name }}')">{{ user.name }} packed it</button>
+                    {% endfor %}
+                    {% if not active_users %}
+                    <span style="color:#aaa;font-size:13px;">No active users. <a href="/users">Add users</a> first.</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
 
-{% if items %}
-  {% set ns = namespace(current_cat='') %}
-  {% for item in items %}
-    {% if item.category != ns.current_cat %}
-      {% set ns.current_cat = item.category %}
-      <p style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin: 1.25rem 0 0.5rem;">{{ item.category }}</p>
+    {% if not items %}
+    <p style="color:#aaa;text-align:center;padding:30px;">No items on this trip.</p>
     {% endif %}
 
-    <div class="card flex justify-between items-center" style="padding:0.85rem 1.25rem;
-      {% if item.packed_by %}opacity:0.65;{% endif %}">
-      <div>
-        <span style="font-size:0.92rem; {% if item.packed_by %}text-decoration:line-through; color:var(--muted);{% endif %}">
-          {{ item.name }}
-        </span>
-        {% if item.packed_by %}
-          <br>
-          <span class="badge {% if item.packed_by == 'Trey' %}badge-trey{% else %}badge-wife{% endif %}" style="margin-top:0.3rem;">
-            ✓ {{ item.packed_by }}
-          </span>
-        {% endif %}
-      </div>
+    <script>
+        const activeUsers = {{ active_users | map(attribute='name') | list | tojson }};
 
-      <div class="flex gap-2">
-        {% if item.packed_by %}
-          <form method="POST" action="/trip/{{ trip.id }}/unpack/{{ item.id }}">
-            <button type="submit" class="btn btn-ghost" style="font-size:0.78rem; padding:0.3rem 0.7rem;">Undo</button>
-          </form>
-        {% else %}
-          <form method="POST" action="/trip/{{ trip.id }}/pack/{{ item.id }}">
-            <input type="hidden" name="packer" value="Trey" />
-            <button type="submit" class="btn btn-trey">Trey</button>
-          </form>
-          <form method="POST" action="/trip/{{ trip.id }}/pack/{{ item.id }}">
-            <input type="hidden" name="packer" value="Wife" />
-            <button type="submit" class="btn btn-wife">Wife</button>
-          </form>
-        {% endif %}
-      </div>
-    </div>
-  {% endfor %}
-{% else %}
-  <div class="empty">
-    <div class="empty-icon">🎒</div>
-    <h3>No items on this trip</h3>
-    <p>Edit the trip to add items from your master list</p>
-  </div>
-{% endif %}
+        function updateProgress(packed, total, pct) {
+            document.getElementById('pct').textContent = pct + '%';
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressLabel').textContent = packed + ' of ' + total + ' items packed';
+        }
 
-<a href="/" class="btn btn-ghost" style="margin-top:1.5rem;">← All Trips</a>
-{% endblock %}
+        function packItem(tripId, itemId, user) {
+            const fd = new FormData();
+            fd.append('packer', user);
+            fetch('/trip/' + tripId + '/pack/' + itemId, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: fd
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('name-' + itemId).classList.add('packed');
+                document.getElementById('status-' + itemId).innerHTML =
+                    '<div class="packed-by">✅ Packed by ' + user + '</div>' +
+                    '<div class="btn-row"><button class="btn btn-unpack" onclick="unpackItem(' + tripId + ',' + itemId + ')">Undo</button></div>';
+                updateProgress(data.packed, data.total, data.pct);
+            });
+        }
+
+        function unpackItem(tripId, itemId) {
+            fetch('/trip/' + tripId + '/unpack/' + itemId, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('name-' + itemId).classList.remove('packed');
+                let btns = activeUsers.map(u =>
+                    '<button class="btn btn-user" onclick="packItem(' + tripId + ',' + itemId + ',\'' + u + '\')">' + u + ' packed it</button>'
+                ).join('');
+                document.getElementById('status-' + itemId).innerHTML = '<div class="btn-row">' + btns + '</div>';
+                updateProgress(data.packed, data.total, data.pct);
+            });
+        }
+    </script>
+</body>
+</html>

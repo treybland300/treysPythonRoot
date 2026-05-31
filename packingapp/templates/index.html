@@ -1,35 +1,40 @@
-{% extends "base.html" %}
-{% block title %}My Trips — PackTrip{% endblock %}
-
-{% block content %}
-<div class="page-header flex justify-between items-center">
-  <div>
-    <h1>Your Trips</h1>
-    <p>Track what's packed for every adventure</p>
-  </div>
-  <a href="/trip/new" class="btn btn-primary">+ New Trip</a>
-</div>
-
-{% if trips %}
-  {% for trip in trips %}
-  <div class="card">
-    <div class="flex justify-between items-center">
-      <div>
-        <a href="/trip/{{ trip.id }}" style="font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:700; color:var(--text); text-decoration:none;">
-          {{ trip.name }}
-        </a>
-        <p style="color:var(--muted); font-size:0.82rem; margin-top:0.2rem;">📅 {{ trip.trip_date }}</p>
-      </div>
-      <a href="/trip/{{ trip.id }}" class="btn btn-ghost">View →</a>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Family Packing App</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; background: #f5f5f5; }
+        h1 { color: #c0622f; }
+        .nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav a { background: #c0622f; color: white; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 15px; }
+        .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .card a.trip-link { color: #c0622f; text-decoration: none; font-weight: bold; font-size: 17px; }
+        .date { color: #888; font-size: 13px; margin-top: 4px; }
+        .btn-delete { background: none; border: none; color: #e74c3c; font-size: 13px; cursor: pointer; padding: 0; margin-top: 6px; display: block; }
+    </style>
+</head>
+<body>
+    <h1>🧳 Family Packing</h1>
+    <div class="nav">
+        <a href="/master">Master List</a>
+        <a href="/categories">Categories</a>
+        <a href="/users">Users</a>
+        <a href="/trip/new">+ New Trip</a>
     </div>
-  </div>
-  {% endfor %}
-{% else %}
-  <div class="empty">
-    <div class="empty-icon">🧳</div>
-    <h3>No trips yet</h3>
-    <p>Create your first trip to get started</p>
-    <a href="/trip/new" class="btn btn-primary" style="margin-top:1.25rem;">Create a Trip</a>
-  </div>
-{% endif %}
-{% endblock %}
+    <h2>Trips</h2>
+    {% if trips %}
+        {% for trip in trips %}
+        <div class="card">
+            <a href="/trip/{{ trip.id }}" class="trip-link">{{ trip.name }}</a>
+            <div class="date">{{ trip.trip_date }}</div>
+            <form method="POST" action="/trip/{{ trip.id }}/delete" onsubmit="return confirm('Delete this trip?')">
+                <button type="submit" class="btn-delete">🗑 Delete trip</button>
+            </form>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="color:#aaa;text-align:center;padding:30px;">No trips yet. Create your first trip!</div>
+    {% endif %}
+</body>
+</html>

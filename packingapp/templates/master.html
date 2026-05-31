@@ -1,48 +1,60 @@
-{% extends "base.html" %}
-{% block title %}Master List — PackTrip{% endblock %}
-
-{% block content %}
-<div class="page-header">
-  <h1>Master List</h1>
-  <p>Items you can add to any trip</p>
-</div>
-
-<div class="card" style="margin-bottom:1.5rem;">
-  <p style="font-family:'Syne',sans-serif; font-weight:700; margin-bottom:1rem;">Add New Item</p>
-  <form method="POST" action="/master/add">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-      <div class="form-group" style="margin:0;">
-        <label>Item Name</label>
-        <input type="text" name="name" placeholder="e.g. Sunscreen" required />
-      </div>
-      <div class="form-group" style="margin:0;">
-        <label>Category</label>
-        <input type="text" name="category" placeholder="e.g. Toiletries" required />
-      </div>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Master Packing List</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; background: #f5f5f5; }
+        h1 { color: #c0622f; }
+        .nav a { background: #c0622f; color: white; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-size: 15px; }
+        .form-card { background: white; border-radius: 12px; padding: 16px; margin: 16px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 10px; margin: 6px 0 12px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
+        button[type=submit] { background: #c0622f; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 15px; width: 100%; cursor: pointer; }
+        .category { margin-top: 20px; }
+        .category h3 { color: #555; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+        .item-row { background: white; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .btn-delete { background: none; border: none; color: #e74c3c; font-size: 20px; cursor: pointer; padding: 0; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/">← Home</a> &nbsp;
+        <a href="/categories">Manage Categories</a>
     </div>
-    <button type="submit" class="btn btn-primary" style="margin-top:0.75rem;">Add Item</button>
-  </form>
-</div>
-
-{% if items %}
-  {% set ns = namespace(current_cat='') %}
-  {% for item in items %}
-    {% if item.category != ns.current_cat %}
-      {% set ns.current_cat = item.category %}
-      <p style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin: 1.25rem 0 0.5rem;">{{ item.category }}</p>
+    <h1>📋 Master List</h1>
+    <div class="form-card">
+        <h3>Add New Item</h3>
+        <form method="POST" action="/master/add">
+            <label>Item Name</label>
+            <input type="text" name="name" placeholder="e.g. Diapers" required>
+            <label>Category</label>
+            <select name="category">
+                {% for cat in categories %}
+                <option {% if cat.name == last_category %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+                {% if not categories %}
+                <option value="">No categories yet — add some first</option>
+                {% endif %}
+            </select>
+            <button type="submit">Add Item</button>
+        </form>
+    </div>
+    {% set item_categories = items | map(attribute='category') | unique | list %}
+    {% for cat in item_categories %}
+    <div class="category">
+        <h3>{{ cat }}</h3>
+        {% for item in items if item.category == cat %}
+        <div class="item-row">
+            <span>{{ item.name }}</span>
+            <form method="POST" action="/master/delete/{{ item.id }}">
+                <button type="submit" class="btn-delete">🗑</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    {% if not items %}
+    <p style="color:#aaa;text-align:center;padding:30px;">No items yet. Add your first item above!</p>
     {% endif %}
-    <div class="card flex justify-between items-center" style="padding:0.85rem 1.25rem;">
-      <span style="font-size:0.92rem;">{{ item.name }}</span>
-      <form method="POST" action="/master/delete/{{ item.id }}">
-        <button type="submit" class="btn btn-danger">✕ Remove</button>
-      </form>
-    </div>
-  {% endfor %}
-{% else %}
-  <div class="empty">
-    <div class="empty-icon">📋</div>
-    <h3>No items yet</h3>
-    <p>Add items above to build your master packing list</p>
-  </div>
-{% endif %}
-{% endblock %}
+</body>
+</html>
