@@ -47,8 +47,10 @@ def backup():
     cur.close()
     conn.close()
 
-    os.makedirs('backups', exist_ok=True)
-    filename = f"backups/backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    backup_dir = os.path.join(script_dir, 'backups')
+    os.makedirs(backup_dir, exist_ok=True)
+    filename = os.path.join(backup_dir, f"backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json")
     with open(filename, 'w') as f:
         json.dump(backup_data, f, indent=2, default=str)
 
