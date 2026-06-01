@@ -360,12 +360,12 @@
     <a href="/" class="home-link">← Home</a>
   </div>
   <div class="nav-row">
-    <a href="/sleep/{{ prev_date }}" class="nav-btn">‹ Prev</a>
+    <a href="/{{ prev_date }}" class="nav-btn">‹ Prev</a>
     {% if log_date != today %}
-      <a href="/sleep/{{ today }}" class="nav-btn today">Today</a>
+      <a href="/{{ today }}" class="nav-btn today">Today</a>
     {% endif %}
-    <a href="/sleep/{{ next_date }}" class="nav-btn">Next ›</a>
-    <a href="/sleep/history" class="nav-btn">History</a>
+    <a href="/{{ next_date }}" class="nav-btn">Next ›</a>
+    <a href="/history" class="nav-btn">History</a>
     <span class="save-indicator" id="save-indicator">&nbsp;</span>
   </div>
 </header>
@@ -768,15 +768,15 @@
         <ul class="date-list">
           {% for d in logged_dates %}
           <li>
-            <a href="/sleep/{{ d }}" class="{{ 'active' if d == log_date else '' }}">
+            <a href="/{{ d }}" class="{{ 'active' if d == log_date else '' }}">
               {% if d == today %}Today — {% endif %}{{ d }}
             </a>
           </li>
           {% endfor %}
         </ul>
       </div>
-      <a href="/sleep/history" class="history-link">All days →</a>
-      <a href="/sleep/history/{{ log_date }}" class="history-link" style="border-top:none;">Changes for today →</a>
+      <a href="/history" class="history-link">All days →</a>
+      <a href="/history/{{ log_date }}" class="history-link" style="border-top:none;">Changes for today →</a>
     </div>
 
     <!-- Key rules quick ref -->
@@ -905,7 +905,7 @@ function saveField(field, value) {
   indicator.textContent = 'Saving…';
   indicator.className = 'save-indicator saving';
 
-  fetch(`/sleep/${LOG_DATE}/save`, {
+  fetch(`/${LOG_DATE}/save`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ field, value })

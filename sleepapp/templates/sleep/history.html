@@ -84,7 +84,7 @@
     <a href="/" class="home-link">← Home</a>
   </div>
   <div class="nav-row">
-    <a href="/sleep/" class="nav-btn">Today</a>
+    <a href="/" class="nav-btn">Today</a>
   </div>
 </header>
 
@@ -93,7 +93,7 @@
 
   {% if days %}
     {% for day in days %}
-    <a href="/sleep/{{ day.date }}" class="day-card">
+    <a href="/{{ day.date }}" class="day-card">
       <div>
         <div class="day-date">{{ day.date }}</div>
         <div class="day-meta">Click to view or edit this day's log</div>
@@ -104,7 +104,7 @@
     </a>
     {% endfor %}
   {% else %}
-    <div class="empty">No days logged yet. <a href="/sleep/" style="color:var(--teal);">Start tracking today →</a></div>
+    <div class="empty">No days logged yet. <a href="/" style="color:var(--teal);">Start tracking today →</a></div>
   {% endif %}
 </div>
 

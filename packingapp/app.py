@@ -24,30 +24,30 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
     cur.execute('''
-        CREATE TABLE IF NOT EXISTS categories (
+        CREATE TABLE IF NOT EXISTS packing_categories (
             id SERIAL PRIMARY KEY,
             name TEXT NOT NULL
         );
-        CREATE TABLE IF NOT EXISTS users (
+        CREATE TABLE IF NOT EXISTS packing_users (
             id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             active INTEGER DEFAULT 1
         );
-        CREATE TABLE IF NOT EXISTS master_items (
+        CREATE TABLE IF NOT EXISTS packing_master_items (
             id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             category TEXT NOT NULL
         );
-        CREATE TABLE IF NOT EXISTS trips (
+        CREATE TABLE IF NOT EXISTS packing_trips (
             id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             trip_date TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT NOW()
         );
-        CREATE TABLE IF NOT EXISTS trip_items (
+        CREATE TABLE IF NOT EXISTS packing_trip_items (
             id SERIAL PRIMARY KEY,
-            trip_id INTEGER REFERENCES trips(id) ON DELETE CASCADE,
-            master_item_id INTEGER REFERENCES master_items(id) ON DELETE CASCADE,
+            trip_id INTEGER REFERENCES packing_trips(id) ON DELETE CASCADE,
+            master_item_id INTEGER REFERENCES packing_master_items(id) ON DELETE CASCADE,
             packed_by TEXT DEFAULT NULL,
             packed_at TIMESTAMP DEFAULT NULL
         );
@@ -62,7 +62,7 @@ init_db()
 def index():
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute('SELECT * FROM trips ORDER BY created_at DESC')
+    cur.execute('SELECT * FROM packing_trips ORDER BY created_at DESC')
     trips = cur.fetchall()
     cur.close()
     conn.close()
@@ -75,9 +75,9 @@ def categories():
     if request.method == 'POST':
         name = request.form['name'].strip()
         if name:
-            cur.execute('INSERT INTO categories (name) VALUES (%s)', (name,))
+            cur.execute('INSERT INTO packing_categories (name) VALUES (%s)', (name,))
             conn.commit()
-    cur.execute('SELECT * FROM categories ORDER BY name')
+    cur.execute('SELECT * FROM packing_categories ORDER BY name')
     all_categories = cur.fetchall()
     cur.close()
     conn.close()
@@ -87,7 +87,7 @@ def categories():
 def delete_category(cat_id):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('DELETE FROM categories WHERE id = %s', (cat_id,))
+    cur.execute('DELETE FROM packing_categories WHERE id = %s', (cat_id,))
     conn.commit()
     cur.close()
     conn.close()
@@ -100,9 +100,9 @@ def users():
     if request.method == 'POST':
         name = request.form['name'].strip()
         if name:
-            cur.execute('INSERT INTO users (name, active) VALUES (%s, 1)', (name,))
+            cur.execute('INSERT INTO packing_users (name, active) VALUES (%s, 1)', (name,))
             conn.commit()
-    cur.execute('SELECT * FROM users ORDER BY name')
+    cur.execute('SELECT * FROM packing_users ORDER BY name')
     all_users = cur.fetchall()
     cur.close()
     conn.close()
@@ -112,10 +112,10 @@ def users():
 def toggle_user(user_id):
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute('SELECT active FROM users WHERE id = %s', (user_id,))
+    cur.execute('SELECT active FROM packing_users WHERE id = %s', (user_id,))
     user = cur.fetchone()
     new_status = 0 if user['active'] else 1
-    cur.execute('UPDATE users SET active = %s WHERE id = %s', (new_status, user_id))
+    cur.execute('UPDATE packing_users SET active = %s WHERE id = %s', (new_status, user_id))
     conn.commit()
     cur.close()
     conn.close()
@@ -125,7 +125,7 @@ def toggle_user(user_id):
 def delete_user(user_id):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('DELETE FROM users WHERE id = %s', (user_id,))
+    cur.execute('DELETE FROM packing_users WHERE id = %s', (user_id,))
     conn.commit()
     cur.close()
     conn.close()
@@ -136,9 +136,9 @@ def master():
     last_category = request.args.get('last_category', '')
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute('SELECT * FROM master_items ORDER BY category, name')
+    cur.execute('SELECT * FROM packing_master_items ORDER BY category, name')
     items = cur.fetchall()
-    cur.execute('SELECT * FROM categories ORDER BY name')
+    cur.execute('SELECT * FROM packing_categories ORDER BY name')
     cats = cur.fetchall()
     cur.close()
     conn.close()
@@ -151,7 +151,7 @@ def add_master_item():
     if name and category:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('INSERT INTO master_items (name, category) VALUES (%s, %s)', (name, category))
+        cur.execute('INSERT INTO packing_master_items (name, category) VALUES (%s, %s)', (name, category))
         conn.commit()
         cur.close()
         conn.close()
@@ -161,7 +161,7 @@ def add_master_item():
 def delete_master_item(item_id):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('DELETE FROM master_items WHERE id = %s', (item_id,))
+    cur.execute('DELETE FROM packing_master_items WHERE id = %s', (item_id,))
     conn.commit()
     cur.close()
     conn.close()
@@ -175,17 +175,17 @@ def new_trip():
         selected_items = request.form.getlist('items')
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('INSERT INTO trips (name, trip_date) VALUES (%s, %s) RETURNING id', (name, trip_date))
+        cur.execute('INSERT INTO packing_trips (name, trip_date) VALUES (%s, %s) RETURNING id', (name, trip_date))
         trip_id = cur.fetchone()[0]
         for item_id in selected_items:
-            cur.execute('INSERT INTO trip_items (trip_id, master_item_id) VALUES (%s, %s)', (trip_id, item_id))
+            cur.execute('INSERT INTO packing_trip_items (trip_id, master_item_id) VALUES (%s, %s)', (trip_id, item_id))
         conn.commit()
         cur.close()
         conn.close()
         return redirect(url_for('trip_detail', trip_id=trip_id))
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute('SELECT * FROM master_items ORDER BY category, name')
+    cur.execute('SELECT * FROM packing_master_items ORDER BY category, name')
     items = cur.fetchall()
     cur.close()
     conn.close()
@@ -195,18 +195,18 @@ def new_trip():
 def trip_detail(trip_id):
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute('SELECT * FROM trips WHERE id = %s', (trip_id,))
+    cur.execute('SELECT * FROM packing_trips WHERE id = %s', (trip_id,))
     trip = cur.fetchone()
     cur.execute('''
         SELECT ti.id, ti.packed_by, ti.packed_at,
                mi.name, mi.category
-        FROM trip_items ti
-        JOIN master_items mi ON ti.master_item_id = mi.id
+        FROM packing_trip_items ti
+        JOIN packing_master_items mi ON ti.master_item_id = mi.id
         WHERE ti.trip_id = %s
         ORDER BY mi.category, mi.name
     ''', (trip_id,))
     items = cur.fetchall()
-    cur.execute('SELECT * FROM users WHERE active = 1 ORDER BY name')
+    cur.execute('SELECT * FROM packing_users WHERE active = 1 ORDER BY name')
     active_users = cur.fetchall()
     cur.close()
     conn.close()
@@ -221,12 +221,12 @@ def pack_item(trip_id, item_id):
     packer = request.form.get('packer', 'Unknown')
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('UPDATE trip_items SET packed_by = %s, packed_at = NOW() WHERE id = %s', (packer, item_id))
+    cur.execute('UPDATE packing_trip_items SET packed_by = %s, packed_at = NOW() WHERE id = %s', (packer, item_id))
     conn.commit()
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        cur.execute('SELECT COUNT(*) FROM trip_items WHERE trip_id = %s', (trip_id,))
+        cur.execute('SELECT COUNT(*) FROM packing_trip_items WHERE trip_id = %s', (trip_id,))
         total = cur.fetchone()[0]
-        cur.execute('SELECT COUNT(*) FROM trip_items WHERE trip_id = %s AND packed_by IS NOT NULL', (trip_id,))
+        cur.execute('SELECT COUNT(*) FROM packing_trip_items WHERE trip_id = %s AND packed_by IS NOT NULL', (trip_id,))
         packed = cur.fetchone()[0]
         cur.close()
         conn.close()
@@ -240,12 +240,12 @@ def pack_item(trip_id, item_id):
 def unpack_item(trip_id, item_id):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('UPDATE trip_items SET packed_by = NULL, packed_at = NULL WHERE id = %s', (item_id,))
+    cur.execute('UPDATE packing_trip_items SET packed_by = NULL, packed_at = NULL WHERE id = %s', (item_id,))
     conn.commit()
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        cur.execute('SELECT COUNT(*) FROM trip_items WHERE trip_id = %s', (trip_id,))
+        cur.execute('SELECT COUNT(*) FROM packing_trip_items WHERE trip_id = %s', (trip_id,))
         total = cur.fetchone()[0]
-        cur.execute('SELECT COUNT(*) FROM trip_items WHERE trip_id = %s AND packed_by IS NOT NULL', (trip_id,))
+        cur.execute('SELECT COUNT(*) FROM packing_trip_items WHERE trip_id = %s AND packed_by IS NOT NULL', (trip_id,))
         packed = cur.fetchone()[0]
         cur.close()
         conn.close()
@@ -263,19 +263,19 @@ def add_trip_items(trip_id):
         selected = request.form.getlist('items')
         for item_id in selected:
             cur.execute(
-                'SELECT id FROM trip_items WHERE trip_id = %s AND master_item_id = %s', (trip_id, item_id)
+                'SELECT id FROM packing_trip_items WHERE trip_id = %s AND master_item_id = %s', (trip_id, item_id)
             )
             if not cur.fetchone():
-                cur.execute('INSERT INTO trip_items (trip_id, master_item_id) VALUES (%s, %s)', (trip_id, item_id))
+                cur.execute('INSERT INTO packing_trip_items (trip_id, master_item_id) VALUES (%s, %s)', (trip_id, item_id))
         conn.commit()
         cur.close()
         conn.close()
         return redirect(url_for('trip_detail', trip_id=trip_id))
-    cur.execute('SELECT * FROM trips WHERE id = %s', (trip_id,))
+    cur.execute('SELECT * FROM packing_trips WHERE id = %s', (trip_id,))
     trip = cur.fetchone()
-    cur.execute('SELECT master_item_id FROM trip_items WHERE trip_id = %s', (trip_id,))
+    cur.execute('SELECT master_item_id FROM packing_trip_items WHERE trip_id = %s', (trip_id,))
     existing = [r['master_item_id'] for r in cur.fetchall()]
-    cur.execute('SELECT * FROM master_items ORDER BY category, name')
+    cur.execute('SELECT * FROM packing_master_items ORDER BY category, name')
     all_items = cur.fetchall()
     available = [item for item in all_items if item['id'] not in existing]
     cur.close()
@@ -286,7 +286,7 @@ def add_trip_items(trip_id):
 def delete_trip(trip_id):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('DELETE FROM trips WHERE id = %s', (trip_id,))
+    cur.execute('DELETE FROM packing_trips WHERE id = %s', (trip_id,))
     conn.commit()
     cur.close()
     conn.close()
