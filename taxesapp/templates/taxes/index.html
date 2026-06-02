@@ -60,7 +60,7 @@
             <a href="/" class="home-link">← Home</a>
             <h1>🧾 Taxes To-Do</h1>
         </div>
-        <a href="{{ url_for('taxes.new_item') }}" class="btn-add">+ Add Item</a>
+        <a href="{{ url_for('new_item') }}" class="btn-add">+ Add Item</a>
     </div>
 
     <div class="list-section">
@@ -83,14 +83,14 @@
                 <button class="btn-notes"
                     data-id="{{ item['id'] }}"
                     data-label="{{ item['label']|e }}"
-                    data-note-url="{{ url_for('taxes.add_note', id=item['id']) }}"
+                    data-note-url="{{ url_for('add_note', id=item['id']) }}"
                     onclick="openNotes(this)">
                     📝{% if notes[item['id']] %} ({{ notes[item['id']]|length }}){% endif %}
                 </button>
-                <form method="POST" action="{{ url_for('taxes.complete_item', id=item['id']) }}" style="display:inline">
+                <form method="POST" action="{{ url_for('complete_item', id=item['id']) }}" style="display:inline">
                     <button type="submit" class="btn-complete">✓ Done</button>
                 </form>
-                <form method="POST" action="{{ url_for('taxes.delete_item', id=item['id']) }}" style="display:inline"
+                <form method="POST" action="{{ url_for('delete_item', id=item['id']) }}" style="display:inline"
                     onsubmit="return confirm('Delete this item?')">
                     <button type="submit" class="btn-delete">🗑</button>
                 </form>
@@ -112,14 +112,14 @@
                 <button class="btn-notes"
                     data-id="{{ item['id'] }}"
                     data-label="{{ item['label']|e }}"
-                    data-note-url="{{ url_for('taxes.add_note', id=item['id']) }}"
+                    data-note-url="{{ url_for('add_note', id=item['id']) }}"
                     onclick="openNotes(this)">
                     📝{% if notes[item['id']] %} ({{ notes[item['id']]|length }}){% endif %}
                 </button>
-                <form method="POST" action="{{ url_for('taxes.complete_item', id=item['id']) }}" style="display:inline">
+                <form method="POST" action="{{ url_for('complete_item', id=item['id']) }}" style="display:inline">
                     <button type="submit" class="btn-complete">↩ Undo</button>
                 </form>
-                <form method="POST" action="{{ url_for('taxes.delete_item', id=item['id']) }}" style="display:inline"
+                <form method="POST" action="{{ url_for('delete_item', id=item['id']) }}" style="display:inline"
                     onsubmit="return confirm('Delete this item?')">
                     <button type="submit" class="btn-delete">🗑</button>
                 </form>
