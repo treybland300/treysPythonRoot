@@ -84,18 +84,21 @@
     /* ── Layout ─────────────────────────────────────── */
     .layout {
       display: grid;
-      grid-template-columns: 1fr 300px;
-      gap: 0;
-      max-width: 1100px;
+      grid-template-columns: 220px 1fr 220px;
+      gap: 0 20px;
+      max-width: 1300px;
       margin: 0 auto;
       padding: 20px 16px;
     }
-    @media (max-width: 800px) {
+    @media (max-width: 960px) {
       .layout { grid-template-columns: 1fr; }
-      .sidebar { order: -1; }
+      .left-sidebar { order: 2; }
+      .right-sidebar { order: -1; }
     }
 
-    .main-col { display: flex; flex-direction: column; gap: 16px; padding-right: 20px; }
+    .main-col { display: flex; flex-direction: column; gap: 16px; }
+    .left-sidebar { display: flex; flex-direction: column; gap: 16px; }
+    .right-sidebar { display: flex; flex-direction: column; gap: 16px; }
 
     /* ── Cards ──────────────────────────────────────── */
     .card {
@@ -371,6 +374,26 @@
 </header>
 
 <div class="layout">
+  <!-- ── LEFT SIDEBAR ────────────────────────────── -->
+  <div class="left-sidebar">
+    <div class="side-card">
+      <h3>Key Rules</h3>
+      <div class="side-card-body" style="padding: 6px 14px 12px;">
+        <ul class="rules-list">
+          <li>Always feed at the <strong>start</strong> of a wake window, never before sleep</li>
+          <li>Keep lights ON throughout the routine — off is the final step</li>
+          <li>Place Stella in crib <strong>sleepy but NOT drowsy</strong></li>
+          <li>No rocking or bouncing — cuddles during a book/song are fine</li>
+          <li>Completely dark room · continuous white noise · 68–72°F</li>
+          <li>24 oz minimum bottles daily · 4 bottles (6–7 oz each)</li>
+          <li>3–3.5 hrs total daytime sleep goal</li>
+          <li>Wait <strong>10 min minimum</strong> before a soothing round</li>
+          <li>Stay in crib ≤2 min per soothing round · leave even if not calm</li>
+        </ul>
+      </div>
+    </div>
+  </div><!-- /left-sidebar -->
+
   <div class="main-col">
 
     <!-- Summary Bar -->
@@ -758,10 +781,9 @@
 
   </div><!-- /main-col -->
 
-  <!-- ── SIDEBAR ──────────────────────────────────── -->
-  <div class="sidebar">
+  <!-- ── RIGHT SIDEBAR ─────────────────────────────── -->
+  <div class="right-sidebar">
 
-    <!-- Logged dates -->
     <div class="side-card">
       <h3>Recent Days</h3>
       <div class="side-card-body" style="padding:0;">
@@ -779,25 +801,7 @@
       <a href="/history/{{ log_date }}" class="history-link" style="border-top:none;">Changes for today →</a>
     </div>
 
-    <!-- Key rules quick ref -->
-    <div class="side-card">
-      <h3>Key Rules</h3>
-      <div class="side-card-body" style="padding: 6px 14px 12px;">
-        <ul class="rules-list">
-          <li>Always feed at the <strong>start</strong> of a wake window, never before sleep</li>
-          <li>Keep lights ON throughout the routine — off is the final step</li>
-          <li>Place Stella in crib <strong>sleepy but NOT drowsy</strong></li>
-          <li>No rocking or bouncing — cuddles during a book/song are fine</li>
-          <li>Completely dark room · continuous white noise · 68–72°F</li>
-          <li>24 oz minimum bottles daily · 4 bottles (6–7 oz each)</li>
-          <li>3–3.5 hrs total daytime sleep goal</li>
-          <li>Wait <strong>10 min minimum</strong> before a soothing round</li>
-          <li>Stay in crib ≤2 min per soothing round · leave even if not calm</li>
-        </ul>
-      </div>
-    </div>
-
-  </div><!-- /sidebar -->
+  </div><!-- /right-sidebar -->
 </div><!-- /layout -->
 
 <script>

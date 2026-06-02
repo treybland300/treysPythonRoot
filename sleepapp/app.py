@@ -1,4 +1,5 @@
 import os
+import re
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -299,12 +300,14 @@ def index():
 
 @app.route('/<log_date>')
 def day(log_date):
+    if not re.match(r'^\d{4}-\d{2}-\d{2}$', log_date):
+        return "Not found", 404
     conn = get_db()
     ensure_day(log_date, conn)
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute('SELECT * FROM sleep_daily_logs WHERE date=%s', (log_date,))
     row = dict(cur.fetchone())
-    cur.execute('SELECT date FROM sleep_daily_logs ORDER BY date DESC LIMIT 30')
+    cur.execute('SELECT date FROM sleep_daily_logs WHERE date ~ $1 ORDER BY date DESC LIMIT 5', (r'^\d{4}-\d{2}-\d{2}$',))
     logged_dates = [r['date'] for r in cur.fetchall()]
     cur.close()
     conn.close()
