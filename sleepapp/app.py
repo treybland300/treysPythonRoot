@@ -307,7 +307,7 @@ def day(log_date):
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute('SELECT * FROM sleep_daily_logs WHERE date=%s', (log_date,))
     row = dict(cur.fetchone())
-    cur.execute('SELECT date FROM sleep_daily_logs WHERE date ~ $1 ORDER BY date DESC LIMIT 5', (r'^\d{4}-\d{2}-\d{2}$',))
+    cur.execute('SELECT date FROM sleep_daily_logs WHERE date ~ %s ORDER BY date DESC LIMIT 5', (r'^\d{4}-\d{2}-\d{2}$',))
     logged_dates = [r['date'] for r in cur.fetchall()]
     cur.close()
     conn.close()
