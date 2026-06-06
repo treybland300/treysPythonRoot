@@ -136,10 +136,14 @@ def master():
     last_category = request.args.get('last_category', '')
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute('SELECT * FROM packing_master_items ORDER BY category, name')
+    cur.execute('SELECT * FROM packing_master_items ORDER BY category, id DESC')
     items = cur.fetchall()
+    if last_category:
+        items = sorted(items, key=lambda x: (0 if x['category'] == last_category else 1, x['category']))
     cur.execute('SELECT * FROM packing_categories ORDER BY name')
     cats = cur.fetchall()
+    if last_category:
+        cats = sorted(cats, key=lambda c: (0 if c['name'] == last_category else 1, c['name']))
     cur.close()
     conn.close()
     return render_template('master.html', items=items, categories=cats, last_category=last_category)
